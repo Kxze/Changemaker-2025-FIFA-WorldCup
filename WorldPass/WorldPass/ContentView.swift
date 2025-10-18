@@ -12,10 +12,10 @@ struct ContentView: View {
         VStack {
             ToolBarView()
         }
-       
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(TabSelection())
 }

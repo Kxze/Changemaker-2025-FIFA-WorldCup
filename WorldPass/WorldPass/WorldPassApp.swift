@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct WorldPassApp: App {
+    @StateObject private var tabSelection = TabSelection()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(tabSelection)
         }
     }
 }

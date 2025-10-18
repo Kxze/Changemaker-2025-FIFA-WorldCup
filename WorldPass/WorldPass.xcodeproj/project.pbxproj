@@ -10,10 +10,28 @@
 		8EDEE77C2E9E124600509869 /* WorldPass.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WorldPass.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AAB1DBC22EA444510070F8FA /* Exceptions for "WorldPass" folder in "WorldPass" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8EDEE77B2E9E124600509869 /* WorldPass */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8EDEE77E2E9E124600509869 /* WorldPass */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AAB1DBC22EA444510070F8FA /* Exceptions for "WorldPass" folder in "WorldPass" target */,
+			);
 			path = WorldPass;
+			sourceTree = "<group>";
+		};
+		AAB1DBBC2EA444340070F8FA /* Fonts */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Fonts;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +50,7 @@
 		8EDEE7732E9E124600509869 = {
 			isa = PBXGroup;
 			children = (
+				AAB1DBBC2EA444340070F8FA /* Fonts */,
 				8EDEE77E2E9E124600509869 /* WorldPass */,
 				8EDEE77D2E9E124600509869 /* Products */,
 			);
@@ -62,6 +81,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				8EDEE77E2E9E124600509869 /* WorldPass */,
+				AAB1DBBC2EA444340070F8FA /* Fonts */,
 			);
 			name = WorldPass;
 			packageProductDependencies = (
@@ -250,6 +270,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WorldPass/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "World Pass";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -294,6 +315,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WorldPass/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "World Pass";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;

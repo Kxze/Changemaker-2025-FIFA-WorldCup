@@ -25,7 +25,7 @@ struct ToolBarView: View {
                 MainView()
             }
             .tabItem {
-                Label("Main", systemImage: "house")
+                Label("", systemImage: "house")
             }
             .tag(TabSelection.TabID.main)
 
@@ -33,7 +33,7 @@ struct ToolBarView: View {
                 MatchesView()
             }
             .tabItem {
-                Label("Matches", systemImage: "soccerball.inverse")
+                Label("", systemImage: "soccerball.inverse")
             }
             .tag(TabSelection.TabID.profile)
 
@@ -41,7 +41,7 @@ struct ToolBarView: View {
                 WalletView()
             }
             .tabItem {
-                Label("Wallet", systemImage: "wallet.bifold.fill")
+                Label("", systemImage: "wallet.bifold.fill")
             }
             .tag(TabSelection.TabID.wallet)
         }

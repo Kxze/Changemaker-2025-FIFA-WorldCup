@@ -23,7 +23,7 @@ struct ProfileView: View {
         VStack(spacing: 16) {
             HStack {
                 Button(action: {}) {
-                    Image(systemName: "chevron.left")
+                    Image( "back")
                         .font(.title2)
                         .foregroundColor(.black)
                 }

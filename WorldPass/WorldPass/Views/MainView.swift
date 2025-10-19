@@ -58,17 +58,22 @@ struct MainView: View {
             VStack(alignment: .leading, spacing: 16) {
                 // Sección En vivo (Horizontal)
                 if !partidosEnVivo.isEmpty {
-                    HStack{
-                        Image(systemName: "circle.fill")
-                            .foregroundStyle(.red)
-                            .glassEffect()
-                        Text("En vivo")
-                            .font(.custom("FWC2026-NormalBlack", size: 20))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("HOY")
+                            .font(.custom("FWC2026-NormalBlack", size: 30))
+                        HStack{
+                            Image(systemName: "circle.fill")
+                                .foregroundStyle(.red)
+                                .glassEffect()
+                            Text("EN VIVO")
+                                .font(.custom("FWC2026-NormalRegular", size: 20))
                             
-                        
+                            
+                        }
                     }
+                    .padding(.horizontal, 20)
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
+                        HStack(alignment:.center, spacing: 60) {
                             ForEach(Array(partidosEnVivo.enumerated()), id: \.offset) { idx, item in
                                 let m = marcadorFicticio(index: idx)
                                 CardEnVivo(
@@ -89,10 +94,11 @@ struct MainView: View {
                             }
                         }
                         // margen interno para permitir que el efecto se salga sin ser cortado
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, 60)
                         // Importante: evitar clipping del scroll
                         .contentShape(Rectangle())
                     }
+                    
                     // Deshabilita el clip del ScrollView horizontal (iOS 17+)
                     .scrollClipDisabled(true)
                     // Hace que el scroll se alinee por vistas, más suave

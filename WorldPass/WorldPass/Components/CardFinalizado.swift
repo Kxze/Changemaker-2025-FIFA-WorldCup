@@ -14,7 +14,7 @@ struct CardFinalizado: View {
     let marcadorVisitante: Int
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
+        HStack(alignment: .center, spacing:7) {
             // Lado izquierdo: Equipo local
             equipoView(equipo: partido.local, alignment: .leading)
 
@@ -23,23 +23,24 @@ struct CardFinalizado: View {
                 Image("FifaPlus")
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 70, height: 20)
+                    .frame(width: 35, height: 10)
                     .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
 
                 Text(grupo.uppercased())
-                    .font(.custom("FWC2026-NormalRegular", size: 12))
+                    .font(.custom("FWC2026-NormalRegular", size: 8))
                     .foregroundColor(.gray)
 
-                HStack(alignment: .center, spacing: 8) {
+                HStack(alignment: .center, spacing: 14) {
                     Text("\(marcadorLocal)")
                         .font(.custom("FWC2026-NormalBlack", size: 28))
                     Text(":")
-                        .font(.custom("FWC2026-NormalBlack", size: 24))
-                        .foregroundColor(.gray)
+                        .font(.custom("FWC2026-NormalBlack", size: 28))
                     Text("\(marcadorVisitante)")
                         .font(.custom("FWC2026-NormalBlack", size: 28))
                 }
+                .offset(y:-10)
                 .foregroundColor(.primary)
+                
             }
             .frame(maxWidth: .infinity)
 
@@ -48,13 +49,8 @@ struct CardFinalizado: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 40)
-        )
-        .frame(width: 350)
-        .ignoresSafeArea()
-        .glassEffect()
-        .foregroundStyle(.thinMaterial)
+        .frame(width: 350,height: 100)
+        .glassEffect(in: .rect(cornerRadius: 25, style: .continuous))
     }
 
     private func equipoView(equipo: Equipos, alignment: HorizontalAlignment) -> some View {
@@ -62,7 +58,7 @@ struct CardFinalizado: View {
             if alignment == .leading {
                 // Texto afuera (a la izquierda), luego bandera
                 Text(equipo.name)
-                    .font(.custom("FWC2026-NormalBlack", size: 12))
+                    .font(.custom("FWC2026-NormalRegular", size: 12))
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.trailing)
                     .lineLimit(2)
@@ -72,18 +68,18 @@ struct CardFinalizado: View {
                 Image(equipo.flag)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 56, height: 36)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .frame(width: 56, height: 30)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 // Bandera primero, luego texto afuera (a la derecha)
                 Image(equipo.flag)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 56, height: 36)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .frame(width: 56, height: 30)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
 
                 Text(equipo.name)
-                    .font(.custom("FWC2026-NormalBlack", size: 12))
+                    .font(.custom("FWC2026-NormalRegular", size: 12))
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)

@@ -19,10 +19,11 @@ struct CardProximo: View {
             equipoView(equipo: partido.local, alignment: .leading)
 
             // Centro: Grupo, fecha y hora
-            VStack(spacing: 6) {
+            VStack {
                 Text(grupo.uppercased())
                     .font(.custom("FWC2026-NormalRegular", size: 12))
                     .foregroundColor(.gray)
+                    .offset(y:-5)
 
                 VStack(spacing: 2) {
                     Text(fecha)
@@ -32,6 +33,7 @@ struct CardProximo: View {
                         .font(.custom("FWC2026-NormalBlack", size: 12))
                         .foregroundColor(.primary)
                 }
+                .offset(y:-10)
             }
             .frame(maxWidth: .infinity)
 
@@ -40,30 +42,45 @@ struct CardProximo: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 40)
-        )
         .ignoresSafeArea()
-        .glassEffect()
+        .glassEffect(in: .rect(cornerRadius: 30, style: .continuous))
         .foregroundStyle(.thinMaterial)
         .frame(width: 400)
     }
 
     private func equipoView(equipo: Equipos, alignment: HorizontalAlignment) -> some View {
-        VStack(spacing: 8) {
-            Image(equipo.flag)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 56, height: 36)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+        HStack(spacing: 8) {
+            if alignment == .leading {
+                // Nombre primero, luego bandera
+                Text(equipo.name)
+                    .font(.custom("FWC2026-NormalBlack", size: 15))
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.trailing)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .frame(maxWidth: 90, alignment: .trailing)
 
-            Text(equipo.name)
-                .font(.custom("FWC2026-NormalBlack", size: 12))
-                .foregroundColor(.primary)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-                .frame(maxWidth: 90, alignment: .center)
+                Image(equipo.flag)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 56, height: 36)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            } else {
+                // Bandera primero, luego nombre
+                Image(equipo.flag)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 56, height: 36)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                Text(equipo.name)
+                    .font(.custom("FWC2026-NormalBlack", size: 15))
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .frame(maxWidth: 90, alignment: .leading)
+            }
         }
         .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .trailing)
     }

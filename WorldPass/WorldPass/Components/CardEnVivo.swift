@@ -22,6 +22,8 @@ struct CardEnVivo: View {
                 equipoView(equipo: partido.local, alignment: .leading)
                     .zIndex(1)
                     .padding(.leading, 50)
+                    .offset(y:15)
+
                 
                 // Centro: Logo, grupo, marcador y minuto
                 VStack(spacing: 16) {
@@ -35,19 +37,19 @@ struct CardEnVivo: View {
                     
                     Text(grupo.uppercased())
                         .font(.custom("FWC2026-NormalRegular", size: 12))
-                        .foregroundColor(.gray)
-                        .offset(y:-15)
+                        .foregroundColor(.primary)
+                        .offset(y:-12)
                     
                     HStack(alignment: .center, spacing: 20) {
                         Text("\(marcadorLocal)")
-                            .font(.custom("FWC2026-NormalBlack", size: 35))
+                            .font(.custom("FWC2026-NormalBlack", size: 30))
                         Text(":")
                             .font(.custom("FWC2026-NormalBlack", size: 24))
                             .foregroundColor(.primary)
                         Text("\(marcadorVisitante)")
-                            .font(.custom("FWC2026-NormalBlack", size:35))
+                            .font(.custom("FWC2026-NormalBlack", size:30))
                     }
-                    .offset(y: -30)
+                    .offset(y: -20)
                     .foregroundColor(.primary)
                     
                     Text(minutoText)
@@ -60,6 +62,7 @@ struct CardEnVivo: View {
                             RoundedRectangle(cornerRadius: 20)
                                 .stroke(.green, lineWidth: 1.5)
                                 .offset(x: -1,y:-20)
+                                .frame(width: 50)
                         )
                     
                 }
@@ -70,11 +73,12 @@ struct CardEnVivo: View {
                 equipoView(equipo: partido.visitante, alignment: .trailing)
                     .zIndex(1)
                     .padding(.trailing, 50)
+                    .offset(y:15)
 
             }
             //Tamaño de la card
-            .frame(width: 400,height: 200)
-            .glassEffect(in: .rect(cornerRadius: 10, style: .continuous))
+            .frame(width: 350,height: 175)
+            .glassEffect(in: .rect(cornerRadius: 25, style: .continuous))
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
         }
@@ -83,12 +87,12 @@ struct CardEnVivo: View {
     }
 
     private func equipoView(equipo: Equipos, alignment: HorizontalAlignment) -> some View {
-        VStack(spacing:20) {
+        VStack(spacing:10) {
             Image(equipo.flag)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 100, height: 66)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .frame(width: 65, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 5))
             
 
             // Nombre centrado debajo de la bandera

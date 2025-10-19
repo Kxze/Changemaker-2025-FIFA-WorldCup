@@ -66,17 +66,18 @@ struct MainView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                CardEventos()
                 // Sección En vivo (Horizontal)
                 if !partidosEnVivo.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("HOY")
-                            .font(.custom("FWC2026-NormalBlack", size: 30))
+                            .font(.custom("FWC2026-NormalBlack", size: 20))
                         HStack{
                             Image(systemName: "circle.fill")
                                 .foregroundStyle(.red)
                                 .glassEffect()
                             Text("EN VIVO")
-                                .font(.custom("FWC2026-NormalRegular", size: 20))
+                                .font(.custom("FWC2026-NormalRegular", size: 15))
                             
                             
                         }
@@ -104,7 +105,7 @@ struct MainView: View {
                             }
                         }
                         // margen interno para permitir que el efecto se salga sin ser cortado
-                        .padding(.horizontal, 50)
+                        .padding(.horizontal, 40)
                         // Importante: evitar clipping del scroll
                         .contentShape(Rectangle())
                     }
@@ -127,7 +128,7 @@ struct MainView: View {
                 if !partidosFinalizados.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("FINALIZADOS")
-                            .font(.custom("FWC2026-NormalBlack", size: 24))
+                            .font(.custom("FWC2026-NormalRegular", size: 15))
                             .padding(.horizontal, 20)
                         
                         VStack(spacing: 16) {

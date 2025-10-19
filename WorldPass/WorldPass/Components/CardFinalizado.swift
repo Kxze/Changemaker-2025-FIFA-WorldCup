@@ -23,8 +23,9 @@ struct CardFinalizado: View {
                 Image("FifaPlus")
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 35, height: 10)
+                    .frame(width: 25, height: 8)
                     .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                    .offset(y:5)
 
                 Text(grupo.uppercased())
                     .font(.custom("FWC2026-NormalRegular", size: 8))
@@ -49,7 +50,7 @@ struct CardFinalizado: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
-        .frame(width: 350,height: 100)
+        .frame(width: 350,height: 80)
         .glassEffect(in: .rect(cornerRadius: 25, style: .continuous))
     }
 

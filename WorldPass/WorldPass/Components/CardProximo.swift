@@ -1,5 +1,5 @@
 //
-//  CardEnVivo.swift
+//  CardProximo.swift
 //  WorldPass
 //
 //  Created by Kxze on 18/10/25.
@@ -7,41 +7,31 @@
 
 import SwiftUI
 
-struct CardEnVivo: View {
+struct CardProximo: View {
     let partido: Partido
     let grupo: String
-    let marcadorLocal: Int
-    let marcadorVisitante: Int
-    let minuto: Int? // nil si aún no inicia o no disponible
+    let fecha: String   // Ej: "16 JUL 2026"
+    let hora: String    // Ej: "19:00"
 
     var body: some View {
         HStack(alignment: .center, spacing: 16) {
             // Lado izquierdo: Equipo local
             equipoView(equipo: partido.local, alignment: .leading)
 
-            // Centro: Grupo, marcador y minuto
+            // Centro: Grupo, fecha y hora
             VStack(spacing: 6) {
                 Text(grupo.uppercased())
                     .font(.custom("FWC2026-NormalRegular", size: 12))
                     .foregroundColor(.gray)
 
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("\(marcadorLocal)")
-                        .font(.custom("FWC2026-NormalBlack", size: 28))
-                    Text("-")
-                        .font(.custom("FWC2026-NormalBlack", size: 24))
-                        .foregroundColor(.gray)
-                    Text("\(marcadorVisitante)")
-                        .font(.custom("FWC2026-NormalBlack", size: 28))
+                VStack(spacing: 2) {
+                    Text(fecha)
+                        .font(.custom("FWC2026-NormalBlack", size: 18))
+                        .foregroundColor(.primary)
+                    Text(hora)
+                        .font(.custom("FWC2026-NormalBlack", size: 12))
+                        .foregroundColor(.primary)
                 }
-                .foregroundColor(.primary)
-
-                Text(minutoText)
-                    .font(.custom("FWC2026-NormalRegular", size: 12))
-                    .foregroundColor(.green)
-                    .background(
-                        RoundedRectangle()
-                    )
             }
             .frame(maxWidth: .infinity)
 
@@ -52,13 +42,11 @@ struct CardEnVivo: View {
         .padding(.horizontal, 16)
         .background(
             RoundedRectangle(cornerRadius: 40)
-                
         )
         .ignoresSafeArea()
         .glassEffect()
         .foregroundStyle(.thinMaterial)
-       
-        
+        .frame(width: 400)
     }
 
     private func equipoView(equipo: Equipos, alignment: HorizontalAlignment) -> some View {
@@ -69,7 +57,6 @@ struct CardEnVivo: View {
                 .frame(width: 56, height: 36)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
-            // Nombre centrado debajo de la bandera
             Text(equipo.name)
                 .font(.custom("FWC2026-NormalBlack", size: 12))
                 .foregroundColor(.primary)
@@ -79,34 +66,23 @@ struct CardEnVivo: View {
                 .frame(maxWidth: 90, alignment: .center)
         }
         .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .trailing)
-        
-    }
-
-    private var minutoText: String {
-        if let m = minuto {
-            return "\(m)′"
-        } else {
-            return "Por iniciar"
-        }
     }
 }
 
 #Preview {
-    // Ejemplo de uso con datos reales del proyecto:
-    // Tomamos dos equipos de equiposDetails para el partido de prueba.
+    // Datos de ejemplo
     let local = equiposDetails[0]
     let visitante = equiposDetails[1]
     let partido = Partido(local: local, visitante: visitante)
 
     return VStack(spacing: 16) {
-        CardEnVivo(
+        CardProximo(
             partido: partido,
             grupo: "Grupo A",
-            marcadorLocal: 1,
-            marcadorVisitante: 0,
-            minuto: 23
+            fecha: "17/JUL",
+            hora: "19:00"
         )
-
+        .frame(width: 300)
     }
     .padding()
 }

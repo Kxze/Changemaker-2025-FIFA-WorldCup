@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// Glass Effect
+// MARK: - Glass Effect
 struct GlassBackground: ViewModifier {
     var corner: CGFloat = 14
     func body(content: Content) -> some View {
@@ -41,7 +41,7 @@ extension View {
     }
 }
 
-// ProfileView
+// MARK: - ProfileView
 struct ProfileView: View {
     // Persistimos el nombre del asset elegido como avatar
     @AppStorage("profileAvatarName") private var profileAvatarName: String?
@@ -61,12 +61,37 @@ struct ProfileView: View {
         }
     }
 
+    // ===== Stacked Cards: estado y datos =====
+    @State private var selectedStackCardID: UUID? = nil
+    @State private var goToWallet: Bool = false
+
+    private var stackedCardsData: [StackCardData] = [
+        .init(
+            color: .green,
+            title: "GRUPO A PARTIDO INAUGURAL",
+            subtitle: "MÉXICO VS HOLANDA",
+            footnote: "ESTADIO AZTECA · CDMX · 16 JUL 2026"
+        ),
+        .init(
+            color: .yellow,
+            title: "GRUPO A PARTIDO INAUGURAL",
+            subtitle: "ALEMANIA VS JAPÓN",
+            footnote: "ESTADIO AZTECA · CDMX · 16 JUL 2026"
+        ),
+        .init(
+            color: .cyan,
+            title: "GRUPO A PARTIDO INAUGURAL",
+            subtitle: "QATAR VS ECUADOR",
+            footnote: "ESTADIO AZTECA · CDMX · 16 JUL 2026"
+        )
+    ]
+
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
                 headerView
                 statsView
-                matchesSection
+                stackedCardsSection   // << Reemplaza las MatchCard por esta sección
             }
         }
         .background(.clear) // fondo transparente
@@ -78,7 +103,7 @@ struct ProfileView: View {
         }
     }
 
-    // Header
+    // MARK: Header
     private var headerView: some View {
         VStack(spacing: 16) {
             // Toca la foto para abrir el selector interno de avatares de la app
@@ -94,16 +119,14 @@ struct ProfileView: View {
                         Circle().stroke(Color.white.opacity(0.6), lineWidth: 3)
                     )
                     .shadow(radius: 5)
-                    .foregroundColor(.white.opacity(0.9)) // 👈 hace claro el person.circle.fill
+                    .foregroundColor(.white.opacity(0.9)) // placeholder claro
 
-                    .shadow(radius: 5)
                     .overlay(alignment: .bottomTrailing) {
                         ZStack {
                             Circle()
                                 .fill(Color.black.opacity(0.30)) // fondo oscuro sutil
                                 .frame(width: 32, height: 32)
-
-                            Image(systemName: "pencil")         // solo el lápiz (sin círculo)
+                            Image(systemName: "pencil")         // solo el lápiz
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.95))
                         }
@@ -150,7 +173,7 @@ struct ProfileView: View {
         .background(.clear)
     }
 
-    // Stats (Grid 2x2 con tamaño uniforme)
+    // MARK: Stats (Grid 2x2 con tamaño uniforme)
     private var statsView: some View {
         let columns = [
             GridItem(.flexible(), spacing: 12),
@@ -167,43 +190,48 @@ struct ProfileView: View {
         .padding(.top, 16)
     }
 
-    // MARK: Matches
-    private var matchesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+    // MARK: Stacked Cards (animación + navegación a WalletView)
+    private var stackedCardsSection: some View {
+        VStack(alignment: .leading) {
             Text("PARTIDOS")
                 .font(.custom("FWC2026-NormalBlack", size: 20))
-                .padding(.horizontal)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 20)
+            
+            ZStack {
+                ForEach(Array(stackedCardsData.enumerated()), id: \.element.id) { (index, item) in
+                    let isSelected = selectedStackCardID == item.id
+                    let anySelected = selectedStackCardID != nil
+                    let isDimmed = anySelected && !isSelected
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    MatchCard(
-                        color: Color.green,
-                        group: "GRUPO A PARTIDO INAUGURAL",
-                        teams: "MÉXICO VS\nHOLANDA",
-                        estadio: "ESTADIO AZTECA\nCDMX",
-                        fecha: "16 DE JUL 2026"
-                    )
-
-                    MatchCard(
-                        color: Color.yellow,
-                        group: "GRUPO A PARTIDO INAUGURAL",
-                        teams: "ALEMANIA VS\nJAPÓN",
-                        estadio: "ESTADIO AZTECA\nCDMX",
-                        fecha: "16 DE JUL 2026"
-                    )
-
-                    MatchCard(
-                        color: Color.cyan,
-                        group: "GRUPO A PARTIDO INAUGURAL",
-                        teams: "QATAR VS\nECUADOR",
-                        estadio: "ESTADIO AZTECA\nCDMX",
-                        fecha: "16 DE JUL 2026"
-                    )
+                    StackCardView(data: item, isSelected: isSelected, isDimmed: isDimmed)
+                        // apilado: un poco a la derecha y arriba por carta
+                        .offset(x: CGFloat(index) * 60, y: CGFloat(-index) * 10)
+                        .zIndex(isSelected ? 100 : Double(index))
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                selectedStackCardID = item.id
+                            }
+                            // deja que se note el énfasis y navega a WalletView
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                                goToWallet = true
+                                // opcional: reset selección al volver
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    selectedStackCardID = nil
+                                }
+                            }
+                        }
                 }
-                .padding(.horizontal)
             }
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, minHeight: 170, alignment: .bottomLeading)
+            .contentShape(Rectangle())
+
+            // Navegación programática a WalletView
+            NavigationLink(destination: WalletView(), isActive: $goToWallet) { EmptyView() }
+                .hidden()
         }
-        .padding(.top)
+        .padding(.bottom, 28)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
@@ -217,7 +245,7 @@ struct ProfileView: View {
     }
 }
 
-// Components
+// MARK: - Components
 
 struct StatCard: View {
     let icon: String
@@ -249,53 +277,61 @@ struct StatCard: View {
     }
 }
 
-struct MatchCard: View {
+// ===== Stacked Card Models & Views =====
+struct StackCardData: Identifiable {
+    let id = UUID()
     let color: Color
-    let group: String
-    let teams: String
-    let estadio: String
-    let fecha: String
+    let title: String
+    let subtitle: String
+    let footnote: String
+}
+
+struct StackCardView: View {
+    let data: StackCardData
+    let isSelected: Bool
+    let isDimmed: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(group)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(data.title)
                 .font(.custom("FWC2026-NormalRegular", size: 10))
-                .foregroundColor(.white)
+                .foregroundStyle(.white.opacity(0.95))
 
-            Text(teams)
-                .font(.custom("FWC2026-NormalBlack", size: 20))
-                .foregroundColor(.white)
-
-            Text(estadio)
-                .font(.custom("FWC2026-NormalRegular", size: 10))
-                .foregroundColor(.white)
-
-            Text(fecha)
-                .font(.custom("FWC2026-NormalRegular", size: 10))
-                .foregroundColor(.white)
+            Text(data.subtitle)
+                .font(.custom("FWC2026-NormalBlack", size: 18))
+                .foregroundStyle(.white)
+                .lineLimit(2)
 
             Spacer()
+
+            Text(data.footnote)
+                .font(.custom("FWC2026-NormalRegular", size: 10))
+                .foregroundStyle(.white.opacity(0.9))
         }
-        .padding()
-        .frame(width: 200, height: 220)
+        .padding(16)
+        .frame(width: 240, height: 140)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [color, color.opacity(0.6)]),
+                colors: [data.color, data.color.opacity(0.6)],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
         )
-        .cornerRadius(16)
+        .cornerRadius(18)
         .overlay(
-            Image(systemName: "soccerball")
-                .font(.system(size: 80))
-                .foregroundColor(.white.opacity(0.2))
-                .offset(x: 50, y: 80),
-            alignment: .topLeading
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(.white.opacity(0.18), lineWidth: 1)
         )
+        .shadow(color: .black.opacity(isSelected ? 0.18 : 0.08),
+                radius: isSelected ? 16 : 8, x: 0, y: isSelected ? 10 : 4)
+        .opacity(isDimmed ? 0.65 : 1)
+        .scaleEffect(isSelected ? 1.03 : 0.96)
+        .rotation3DEffect(.degrees(isSelected ? 0 : 8), axis: (x: 0, y: 1, z: 0))
+        .animation(.spring(response: 0.35, dampingFraction: 0.8, blendDuration: 0.15), value: isSelected)
+        .animation(.easeInOut(duration: 0.2), value: isDimmed)
     }
 }
 
-// Avatar Picker (solo imágenes de la app)
+// MARK: - Avatar Picker (solo imágenes de la app)
 struct AvatarPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedName: String?
@@ -342,7 +378,6 @@ struct AvatarPickerSheet: View {
         }
     }
 }
-
 
 #Preview {
     NavigationStack {

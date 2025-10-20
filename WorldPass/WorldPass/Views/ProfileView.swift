@@ -114,7 +114,18 @@ struct ProfileView: View {
             }
         }
         .padding(.top)
+        .toolbar{
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    Settings()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
     }
+    
 }
 
 struct StatCard: View {
@@ -188,16 +199,7 @@ struct MatchCard: View {
             alignment: .topLeading
         )
         
-        .toolbar{
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    Settings()
-                } label: {
-                    Image(systemName: "gearshape")
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
+        
     }
 }
 

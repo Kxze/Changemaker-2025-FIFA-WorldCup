@@ -135,10 +135,10 @@ struct ProfileView: View {
             }
             .buttonStyle(.plain)
 
-            Text("Alex")
-                .font(.custom("FWC2026-NormalBlack", size: 20))
-
             VStack(spacing: 2) { // acercar @ al nombre
+                Text("Alex")
+                    .font(.custom("FWC2026-NormalBlack", size: 20))
+                
                 Text("@alexsmith96")
                     .font(.custom("FWC2026-NormalRegular", size: 14))
             }

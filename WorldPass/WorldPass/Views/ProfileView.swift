@@ -41,7 +41,26 @@ extension View {
     }
 }
 
+// MARK: - ProfileView
 struct ProfileView: View {
+    // Persistimos el nombre del asset elegido como avatar
+    @AppStorage("profileAvatarName") private var profileAvatarName: String?
+    @State private var showAvatarSheet = false
+
+    // Ajusta aquí los nombres EXACTOS de tus imágenes en Assets.xcassets
+    private let appAvatars: [String] = [
+        "perfil_zayu", "perfil_maple", "perfil_clutch"
+    ]
+
+    // Imagen a mostrar (usa asset si hay selección; si no, placeholder del sistema)
+    private var profileImage: Image {
+        if let name = profileAvatarName, !name.isEmpty {
+            return Image(name)
+        } else {
+            return Image(systemName: "person.circle.fill")
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -50,24 +69,48 @@ struct ProfileView: View {
                 matchesSection
             }
         }
-        .background(.clear) // pantalla sin color
+        .background(.clear) // fondo transparente
+        .sheet(isPresented: $showAvatarSheet) {
+            AvatarPickerSheet(
+                selectedName: $profileAvatarName,
+                availableNames: appAvatars
+            )
+        }
     }
-    
+
     // MARK: Header
     private var headerView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "Zayu")
-                .resizable()
-                .frame(width: 120, height: 120)
-            
-            VStack(spacing: 2) { 
-                Text("Alex")
-                    .font(.custom("FWC2026-NormalBlack", size: 20))
-                
+            // Toca la foto para abrir el selector interno de avatares de la app
+            Button {
+                showAvatarSheet = true
+            } label: {
+                profileImage
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 120, height: 120)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle().stroke(Color.white.opacity(0.6), lineWidth: 3)
+                    )
+                    .shadow(radius: 5)
+                    .overlay(alignment: .bottomTrailing) {
+                        Image(systemName: "pencil.circle.fill")
+                            .font(.system(size: 28))
+                            .symbolRenderingMode(.multicolor)
+                            .offset(x: 6, y: 6)
+                    }
+            }
+            .buttonStyle(.plain)
+
+            Text("Alex")
+                .font(.custom("FWC2026-NormalBlack", size: 20))
+
+            VStack(spacing: 2) { // acercar @ al nombre
                 Text("@alexsmith96")
                     .font(.custom("FWC2026-NormalRegular", size: 14))
             }
-            
+
             HStack(spacing: 40) {
                 VStack {
                     Text("15")
@@ -82,7 +125,7 @@ struct ProfileView: View {
                         .font(.custom("FWC2026-NormalRegular", size: 14))
                 }
             }
-            
+
             Button(action: {}) {
                 HStack {
                     Image(systemName: "person.badge.plus")
@@ -95,9 +138,10 @@ struct ProfileView: View {
             .padding(.bottom, 20)
         }
         .padding(.top, 12)
-        .background(.clear) // sin color también aquí
+        .background(.clear)
     }
-    
+
+    // MARK: Stats (Grid 2x2 con tamaño uniforme)
     private var statsView: some View {
         let columns = [
             GridItem(.flexible(), spacing: 12),
@@ -114,13 +158,13 @@ struct ProfileView: View {
         .padding(.top, 16)
     }
 
-    
+    // MARK: Matches
     private var matchesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("PARTIDOS")
                 .font(.custom("FWC2026-NormalBlack", size: 20))
                 .padding(.horizontal)
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     MatchCard(
@@ -130,7 +174,7 @@ struct ProfileView: View {
                         estadio: "ESTADIO AZTECA\nCDMX",
                         fecha: "16 DE JUL 2026"
                     )
-                    
+
                     MatchCard(
                         color: Color.yellow,
                         group: "GRUPO A PARTIDO INAUGURAL",
@@ -138,7 +182,7 @@ struct ProfileView: View {
                         estadio: "ESTADIO AZTECA\nCDMX",
                         fecha: "16 DE JUL 2026"
                     )
-                    
+
                     MatchCard(
                         color: Color.cyan,
                         group: "GRUPO A PARTIDO INAUGURAL",
@@ -164,18 +208,20 @@ struct ProfileView: View {
     }
 }
 
+// MARK: - Components
+
 struct StatCard: View {
     let icon: String
     let value: String
     let label: String
     private let cardHeight: CGFloat = 74 // altura fija para uniformidad
-    
+
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.black.opacity(0.6))
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
                     .font(.custom("FWC2026-NormalBlack", size: 20))
@@ -183,13 +229,13 @@ struct StatCard: View {
                 Text(label)
                     .font(.custom("FWC2026-NormalRegular", size: 12))
                     .foregroundStyle(.black.opacity(0.45))
-                    .lineLimit(1)                // evita variaciones
+                    .lineLimit(1)
                     .truncationMode(.tail)
             }
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: cardHeight)          // mismo alto en todas
+        .frame(height: cardHeight)
         .glassCard(corner: 14)
     }
 }
@@ -200,25 +246,25 @@ struct MatchCard: View {
     let teams: String
     let estadio: String
     let fecha: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(group)
                 .font(.custom("FWC2026-NormalRegular", size: 10))
                 .foregroundColor(.white)
-            
+
             Text(teams)
                 .font(.custom("FWC2026-NormalBlack", size: 20))
                 .foregroundColor(.white)
-            
+
             Text(estadio)
                 .font(.custom("FWC2026-NormalRegular", size: 10))
                 .foregroundColor(.white)
-            
+
             Text(fecha)
                 .font(.custom("FWC2026-NormalRegular", size: 10))
                 .foregroundColor(.white)
-            
+
             Spacer()
         }
         .padding()
@@ -240,10 +286,57 @@ struct MatchCard: View {
     }
 }
 
+// MARK: - Avatar Picker (solo imágenes de la app)
+struct AvatarPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedName: String?
+    let availableNames: [String]
+
+    private let cols = [GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)]
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                LazyVGrid(columns: cols, spacing: 12) {
+                    ForEach(availableNames, id: \.self) { name in
+                        Button {
+                            selectedName = name
+                            dismiss()
+                        } label: {
+                            ZStack {
+                                Image(name)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 96, height: 96)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                                if selectedName == name {
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .strokeBorder(.blue, lineWidth: 3)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(16)
+            }
+            .navigationTitle("Elige tu avatar")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cerrar") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
 #Preview {
     NavigationStack {
         ProfileView()
             .environmentObject(TabSelection())
     }
 }
-

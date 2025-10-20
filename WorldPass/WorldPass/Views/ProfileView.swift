@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// MARK: - Glass Effect
+// Glass Effect
 struct GlassBackground: ViewModifier {
     var corner: CGFloat = 14
     func body(content: Content) -> some View {
@@ -41,7 +41,7 @@ extension View {
     }
 }
 
-// MARK: - ProfileView
+// ProfileView
 struct ProfileView: View {
     // Persistimos el nombre del asset elegido como avatar
     @AppStorage("profileAvatarName") private var profileAvatarName: String?
@@ -78,7 +78,7 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: Header
+    // Header
     private var headerView: some View {
         VStack(spacing: 16) {
             // Toca la foto para abrir el selector interno de avatares de la app
@@ -94,11 +94,20 @@ struct ProfileView: View {
                         Circle().stroke(Color.white.opacity(0.6), lineWidth: 3)
                     )
                     .shadow(radius: 5)
+                    .foregroundColor(.white.opacity(0.9)) // 👈 hace claro el person.circle.fill
+
+                    .shadow(radius: 5)
                     .overlay(alignment: .bottomTrailing) {
-                        Image(systemName: "pencil.circle.fill")
-                            .font(.system(size: 28))
-                            .symbolRenderingMode(.multicolor)
-                            .offset(x: 6, y: 6)
+                        ZStack {
+                            Circle()
+                                .fill(Color.black.opacity(0.30)) // fondo oscuro sutil
+                                .frame(width: 32, height: 32)
+
+                            Image(systemName: "pencil")         // solo el lápiz (sin círculo)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.95))
+                        }
+                        .offset(x: 6, y: 6)
                     }
             }
             .buttonStyle(.plain)
@@ -141,7 +150,7 @@ struct ProfileView: View {
         .background(.clear)
     }
 
-    // MARK: Stats (Grid 2x2 con tamaño uniforme)
+    // Stats (Grid 2x2 con tamaño uniforme)
     private var statsView: some View {
         let columns = [
             GridItem(.flexible(), spacing: 12),
@@ -208,7 +217,7 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - Components
+// Components
 
 struct StatCard: View {
     let icon: String
@@ -286,7 +295,7 @@ struct MatchCard: View {
     }
 }
 
-// MARK: - Avatar Picker (solo imágenes de la app)
+// Avatar Picker (solo imágenes de la app)
 struct AvatarPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedName: String?
@@ -333,6 +342,7 @@ struct AvatarPickerSheet: View {
         }
     }
 }
+
 
 #Preview {
     NavigationStack {

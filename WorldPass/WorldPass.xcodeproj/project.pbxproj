@@ -11,7 +11,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		AAB1DBC22EA444510070F8FA /* Exceptions for "WorldPass" folder in "WorldPass" target */ = {
+		F068058D2EA69DBC00BED20C /* Exceptions for "WorldPass" folder in "WorldPass" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -24,7 +24,7 @@
 		8EDEE77E2E9E124600509869 /* WorldPass */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				AAB1DBC22EA444510070F8FA /* Exceptions for "WorldPass" folder in "WorldPass" target */,
+				F068058D2EA69DBC00BED20C /* Exceptions for "WorldPass" folder in "WorldPass" target */,
 			);
 			path = WorldPass;
 			sourceTree = "<group>";
@@ -270,7 +270,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = WorldPass/Info.plist;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_CFBundleDisplayName = "World Pass";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -315,7 +315,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = WorldPass/Info.plist;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_CFBundleDisplayName = "World Pass";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;

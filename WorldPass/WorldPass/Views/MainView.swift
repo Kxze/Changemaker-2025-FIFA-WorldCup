@@ -13,6 +13,9 @@ struct MainView: View {
             Text("Main")
             // Aquí podrías navegar hacia ProfileView si lo deseas:
              NavigationLink("Ir al Perfil") { ProfileView() }
+            
+            NavigationLink("Ir a predicciones") { IAPrediccionesView()
+            }
         }
         .navigationTitle("MAIN")
     }

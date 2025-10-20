@@ -21,23 +21,6 @@ struct ProfileView: View {
     
     private var headerView: some View {
         VStack(spacing: 16) {
-            HStack {
-                Button(action: {}) {
-                    Image(systemName: "chevron.left")
-                        .font(.title2)
-                        .foregroundColor(.black)
-                }
-                Spacer()
-                Text("MI PERFIL")
-                    .font(.custom("FWC2026-NormalBlack", size: 20))
-                Spacer()
-                Button(action: {}) {
-                    Image(systemName: "gearshape")
-                        .font(.title2)
-                        .foregroundColor(.black)
-                }
-            }
-            .padding(.horizontal)
             
             Image(systemName: "person.circle.fill")
                 .resizable()
@@ -204,6 +187,17 @@ struct MatchCard: View {
                 .offset(x: 50, y: 80),
             alignment: .topLeading
         )
+        
+        .toolbar{
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    Settings()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
     }
 }
 

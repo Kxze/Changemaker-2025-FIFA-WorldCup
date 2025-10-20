@@ -49,8 +49,8 @@ struct CardEventos: View {
                     .font(.custom("FWC2026-NormalRegular", size: 13))
             }
         }
-        .frame(width:350, height: 180)
-        .padding(.vertical, 30)
+        .frame(width:350, height: 150)
+        .padding(.vertical, 40)
         .padding(.horizontal, 20)
         .glassEffect(in: .rect(cornerRadius: 25, style: .continuous))
         .tint(.green)

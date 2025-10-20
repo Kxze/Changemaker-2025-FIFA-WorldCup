@@ -63,10 +63,39 @@ struct MainView: View {
         }
     }
     
+    // MARK: - Próximos (usando CardProximo)
+    // Fechas/horas ficticias para demostración
+    private func fechaHoraFicticia(index: Int) -> (fecha: String, hora: String) {
+        let dias = ["16/JUL", "17/JUL", "18/JUL", "19/JUL", "20/JUL", "21/JUL", "22/JUL"]
+        let horas = ["16:00", "18:30", "19:00", "20:00", "21:30", "22:00"]
+        let fecha = dias[index % dias.count]
+        let hora = horas[(index * 2 + 1) % horas.count]
+        return (fecha, hora)
+    }
+    
+    private var partidosProximos: [(partido: Partido, grupo: String, fecha: String, hora: String)] {
+        let base = todosLosPartidos.shuffled()
+        let seleccion = Array(base.prefix(2))
+        return seleccion.enumerated().map { idx, item in
+            let fh = fechaHoraFicticia(index: idx)
+            return (partido: item.partido, grupo: item.grupo, fecha: fh.fecha, hora: fh.hora)
+        }
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                CardEventos()
+                VStack{
+                    HStack{
+                        Text("PRÓXIMOS EVENTOS")
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .font(.custom("FWC2026-NormalBlack", size: 20))
+                    
+                    CardEventos()
+                    
+                }
                 // Sección En vivo (Horizontal)
                 if !partidosEnVivo.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
@@ -145,9 +174,43 @@ struct MainView: View {
                         }
                     }
                 }
+                
+                // Sección Próximos (igual formato que Finalizados, usando CardProximo)
+                if !partidosProximos.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack{
+                            Text("PRÓXIMOS")
+                                .font(.custom("FWC2026-NormalRegular", size: 15))
+                                .padding(.horizontal, 20)
+                            Spacer()
+                            NavigationLink {
+                                MatchesView()
+                            } label: {
+                                Text("Ver todos")
+                                    .foregroundStyle(.gray)
+                                    .font(.custom("FWC2026-NormalRegular", size: 15))
+                                    .padding(.horizontal, 20)
+                            }
+                        }
+                        
+                        VStack(spacing: 16) {
+                            ForEach(Array(partidosProximos.enumerated()), id: \.offset) { _, item in
+                                CardProximo(
+                                    partido: item.partido,
+                                    grupo: item.grupo,
+                                    fecha: item.fecha,
+                                    hora: item.hora
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, 10)
+                            }
+                        }
+                    }
+                }
             }
             .padding(.vertical, 16)
         }
+        .scrollEdgeEffectStyle(.soft, for: .bottom)
         .toolbar{
             ToolbarItem(placement: .topBarLeading) {
                 NavigationLink {

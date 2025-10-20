@@ -51,6 +51,7 @@ struct ToolBarView: View {
             }
             .tag(TabSelection.TabID.wallet)
         }
+        .tabBarMinimizeBehavior(.onScrollDown)
         // Este tinte solo debe afectar los iconos/estado de la Tab Bar
         .tint(tintColor(for: tabSelection.selection))
     }

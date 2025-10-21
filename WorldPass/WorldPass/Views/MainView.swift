@@ -53,20 +53,20 @@ struct MainView: View {
         return (local, visitante, minuto)
     }
     
-    // Partidos finalizados: tomamos 2 de la lista y les asignamos marcador ficticio (sin minuto)
-    private var partidosFinalizados: [(partido: Partido, grupo: String, local: Int, visitante: Int)] {
-        let base = todosLosPartidos.shuffled()
-        let seleccion = Array(base.prefix(2))
-        return seleccion.enumerated().map { idx, item in
-            let m = marcadorFicticio(index: idx + 7) // offset para variar respecto a "En vivo"
-            return (partido: item.partido, grupo: item.grupo, local: m.local, visitante: m.visitante)
-        }
-    }
-    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                CardEventos()
+                VStack{
+                    HStack{
+                        Text("PRÓXIMOS EVENTOS")
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .font(.custom("FWC2026-NormalBlack", size: 20))
+                    
+                    CardEventos()
+                    
+                }
                 // Sección En vivo (Horizontal)
                 if !partidosEnVivo.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
@@ -123,31 +123,10 @@ struct MainView: View {
                         .foregroundColor(.gray)
                         .padding(.horizontal)
                 }
-                
-                // Sección Finalizados (2 cards)
-                if !partidosFinalizados.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("FINALIZADOS")
-                            .font(.custom("FWC2026-NormalRegular", size: 15))
-                            .padding(.horizontal, 20)
-                        
-                        VStack(spacing: 16) {
-                            ForEach(Array(partidosFinalizados.enumerated()), id: \.offset) { _, item in
-                                CardFinalizado(
-                                    partido: item.partido,
-                                    grupo: item.grupo,
-                                    marcadorLocal: item.local,
-                                    marcadorVisitante: item.visitante
-                                )
-                                .frame(maxWidth: .infinity)
-                                .padding(.horizontal, 20)
-                            }
-                        }
-                    }
-                }
             }
             .padding(.vertical, 16)
         }
+        .scrollEdgeEffectStyle(.soft, for: .bottom)
         .toolbar{
             ToolbarItem(placement: .topBarLeading) {
                 NavigationLink {

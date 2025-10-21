@@ -101,6 +101,10 @@ struct ProfileView: View {
                 availableNames: appAvatars
             )
         }
+        // Modern programmatic navigation target (iOS 17+)
+        .navigationDestination(isPresented: $goToWallet) {
+            WalletView()
+        }
     }
 
     // MARK: Header
@@ -226,13 +230,13 @@ struct ProfileView: View {
             .padding(.horizontal, 20)
             .frame(maxWidth: .infinity, minHeight: 170, alignment: .bottomLeading)
             .contentShape(Rectangle())
-
-            // Navegación programática a WalletView
-            NavigationLink(destination: WalletView(), isActive: $goToWallet) { EmptyView() }
-                .hidden()
         }
         .padding(.bottom, 28)
         .toolbar {
+            ToolbarItem(placement: .title) {
+                Text("MI PERFIL")
+                    .font(.custom("FWC2026-NormalBlack", size: 20))
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     Settings()

@@ -67,19 +67,19 @@ struct ProfileView: View {
 
     private var stackedCardsData: [StackCardData] = [
         .init(
-            color: .green,
+            backgroundName: "FondoVerde",
             title: "GRUPO A PARTIDO INAUGURAL",
             subtitle: "MÉXICO VS HOLANDA",
             footnote: "ESTADIO AZTECA · CDMX · 16 JUL 2026"
         ),
         .init(
-            color: .yellow,
+            backgroundName: "FondoAzul",
             title: "GRUPO A PARTIDO INAUGURAL",
             subtitle: "ALEMANIA VS JAPÓN",
             footnote: "ESTADIO AZTECA · CDMX · 16 JUL 2026"
         ),
         .init(
-            color: .cyan,
+            backgroundName: "FondoMorado",
             title: "GRUPO A PARTIDO INAUGURAL",
             subtitle: "QATAR VS ECUADOR",
             footnote: "ESTADIO AZTECA · CDMX · 16 JUL 2026"
@@ -197,7 +197,7 @@ struct ProfileView: View {
     // MARK: Stacked Cards (animación + navegación a WalletView)
     private var stackedCardsSection: some View {
         VStack(alignment: .leading) {
-            Text("PARTIDOS")
+            Text("MIS BOLETOS")
                 .font(.custom("FWC2026-NormalBlack", size: 20))
                 .padding(.horizontal, 20)
                 .padding(.vertical, 20)
@@ -284,7 +284,7 @@ struct StatCard: View {
 // ===== Stacked Card Models & Views =====
 struct StackCardData: Identifiable {
     let id = UUID()
-    let color: Color
+    let backgroundName: String
     let title: String
     let subtitle: String
     let footnote: String
@@ -314,13 +314,15 @@ struct StackCardView: View {
         }
         .padding(16)
         .frame(width: 240, height: 140)
-        .background(
-            LinearGradient(
-                colors: [data.color, data.color.opacity(0.6)],
-                startPoint: .topLeading, endPoint: .bottomTrailing
-            )
-        )
-        .cornerRadius(18)
+        .background {
+            // Fondo con imagen de Assets
+            Image(data.backgroundName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 240, height: 140)
+                .clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
         .overlay(
             RoundedRectangle(cornerRadius: 18)
                 .stroke(.white.opacity(0.18), lineWidth: 1)

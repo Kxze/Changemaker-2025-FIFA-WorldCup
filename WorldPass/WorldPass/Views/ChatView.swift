@@ -1,8 +1,11 @@
+Código funcional gemini IA
+
+
 import SwiftUI
 import Foundation
 
 // =============================================================
-// 1) Configuración de Gemini
+//
 // =============================================================
 
 enum GeminiError: LocalizedError {
@@ -25,7 +28,7 @@ enum GeminiError: LocalizedError {
     }
 }
 
-// MARK: - Request/Response DTOs (v1beta generateContent)
+//
 struct GeminiRequest: Encodable {
     let contents: [GeminiContent]
 }
@@ -59,45 +62,27 @@ struct GeminiSafety: Decodable {
     let probability: String?
 }
 
-// MARK: - Cliente de Gemini (REST)
+//
 struct GeminiClient {
-    // Modelo (puedes cambiar por "gemini-1.5-pro")
-    let model: String = "gemini-1.5-flash"
+    // modelo de gemini
+    let model: String = "gemini-2.5-flash"
 
-    #if DEBUG
-    private let debugFallbackAPIKey: String? = nil // Solo pruebas locales si lo necesitas
-    #else
-    private let debugFallbackAPIKey: String? = nil
-    #endif
-
-    /// Resuelve la API key desde varias fuentes
     private func resolveAPIKey() -> String? {
-        let fromObject = Bundle.main.object(forInfoDictionaryKey: "GEMINI_API_KEY") as? String
-        let fromDict   = Bundle.main.infoDictionary?["GEMINI_API_KEY"] as? String
-        let fromEnv    = ProcessInfo.processInfo.environment["GEMINI_API_KEY"]
-        let fromUD     = UserDefaults.standard.string(forKey: "GEMINI_API_KEY")
-        let fromDebug  = debugFallbackAPIKey
-
-        return [fromObject, fromDict, fromEnv, fromUD, fromDebug]
-            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .first { !$0.isEmpty }
+        if let key = Bundle.main.object(forInfoDictionaryKey: "GEMINI_API_KEY") as? String {
+            let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
+            return "AIzaSyAlEHW76I6ARzb3-qaZOgJMWhZMlcf9_Vo"
+        }
+        #endif
+        
+        return nil
     }
-
+    
+    
     func generate(_ userText: String) async throws -> String {
-        // Logs de depuración
-        print(" Info.plist path:",
-              Bundle.main.path(forResource: "Info", ofType: "plist") ?? "No encontrado")
-        print(" GEMINI_API_KEY (object):",
-              Bundle.main.object(forInfoDictionaryKey: "GEMINI_API_KEY") as Any)
-        print(" GEMINI_API_KEY (dict):",
-              Bundle.main.infoDictionary?["GEMINI_API_KEY"] as Any)
-        print(" ENV[GEMINI_API_KEY]:",
-              ProcessInfo.processInfo.environment["GEMINI_API_KEY"] as Any)
-        print(" UD[GEMINI_API_KEY]:",
-              UserDefaults.standard.string(forKey: "GEMINI_API_KEY") as Any)
-        print(" Running in previews?:",
-              ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1")
-
         guard let apiKey = resolveAPIKey(), !apiKey.isEmpty else {
             throw GeminiError.missingAPIKey
         }
@@ -109,9 +94,7 @@ struct GeminiClient {
         let url = comps.url!
 
         let payload = GeminiRequest(
-            contents: [
-                GeminiContent(role: "user", parts: [GeminiPart(text: userText)])
-            ]
+            contents: [GeminiContent(role: "user", parts: [GeminiPart(text: userText)])]
         )
 
         var req = URLRequest(url: url)
@@ -133,7 +116,7 @@ struct GeminiClient {
         if let text = decoded.candidates?
             .compactMap({ $0.content?.parts?.compactMap(\.text).joined(separator: "") })
             .first, !text.isEmpty {
-            return text
+            return text.trimmingCharacters(in: .whitespacesAndNewlines)
         } else {
             throw GeminiError.emptyResponse
         }
@@ -141,10 +124,9 @@ struct GeminiClient {
 }
 
 // =============================================================
-// 2) UI
+// Diseño
 // =============================================================
 
-// MARK: - Tipografías (usa tus fuentes)
 extension Font {
     static func fwcTitle(_ size: CGFloat) -> Font {
         .custom("FWC2026-NormalBlack", size: size)
@@ -154,7 +136,6 @@ extension Font {
     }
 }
 
-// MARK: - Modelo
 struct Message: Identifiable {
     let id = UUID()
     let text: String
@@ -162,7 +143,6 @@ struct Message: Identifiable {
     var subtitle: String? = nil
 }
 
-// MARK: - Vista principal
 struct IAPrediccionesView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var messages: [Message] = [
@@ -183,8 +163,7 @@ struct IAPrediccionesView: View {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 12) {
                             ForEach(messages) { msg in
-                                ChatBubble(message: msg)
-                                    .id(msg.id)
+                                ChatBubble(message: msg).id(msg.id)
                             }
                             if isLoading {
                                 TypingBubble()
@@ -192,7 +171,6 @@ struct IAPrediccionesView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 16)
-                        // Reserva espacio para el composer/bottom bar
                         .padding(.bottom, 100)
                     }
                     .onChange(of: messages.count) { _ in
@@ -203,7 +181,6 @@ struct IAPrediccionesView: View {
                 }
             }
         }
-        // Composer anclado al safe area inferior (encima de tu barra)
         .safeAreaInset(edge: .bottom) {
             composer
                 .background(.ultraThinMaterial)
@@ -212,7 +189,7 @@ struct IAPrediccionesView: View {
         .onTapGesture { isFieldFocused = false }
     }
 
-    // MARK: - Top Bar
+    
     private var topBar: some View {
         HStack(spacing: 12) {
             Button { dismiss() } label: {
@@ -241,7 +218,7 @@ struct IAPrediccionesView: View {
         .overlay(Divider(), alignment: .bottom)
     }
 
-    // MARK: - Composer
+
     private var composer: some View {
         HStack(spacing: 10) {
             TextField("Pregunta o busca lo que quieras", text: $currentMessage, axis: .vertical)
@@ -269,7 +246,7 @@ struct IAPrediccionesView: View {
         .padding(.vertical, 12)
     }
 
-    // MARK: - Envío
+   
     private func sendMessage() {
         let userText = currentMessage.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !userText.isEmpty else { return }
@@ -288,7 +265,7 @@ struct IAPrediccionesView: View {
         }
     }
 
-    // Llama al cliente
+    
     private func fetchGeminiResponse(for text: String) async -> String? {
         let client = GeminiClient()
         do {
@@ -299,7 +276,7 @@ struct IAPrediccionesView: View {
         }
     }
 
-    // MARK: - Burbujas
+  
     private struct ChatBubble: View {
         let message: Message
 
@@ -312,7 +289,6 @@ struct IAPrediccionesView: View {
                         .font(.fwcText(16))
                         .foregroundStyle(.black)
                         .lineSpacing(2)
-                        // Hasta ~75% del ancho de pantalla (más cómodo visualmente)
                         .frame(maxWidth: UIScreen.main.bounds.width * 0.75, alignment: .leading)
                 }
                 .padding(.horizontal, 14)
@@ -358,7 +334,7 @@ struct IAPrediccionesView: View {
     }
 }
 
-// MARK: - Preview
+
 #Preview {
     NavigationStack {
         IAPrediccionesView()

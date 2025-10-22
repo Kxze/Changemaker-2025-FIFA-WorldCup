@@ -7,10 +7,25 @@
 
 import SwiftUI
 
-// MARK: - Pantalla Partidos Finalizados
+// MARK: - Pantalla Partidos Finalizados usando MatchSimulator
 struct FinalizadosView: View {
-    var onBack: (() -> Void)?
-    let partidos: [PartidoFinalizado] = PartidoFinalizado.mock
+    // Precomputamos 10 partidos simulados (partido, grupo y sus stats)
+    private let simulados: [(partido: Partido, grupo: String, stats: MatchStats)] = {
+        // 1) Fuente: todos los partidos con su grupo asociado
+        var lista: [(partido: Partido, grupo: String)] = []
+        for grupo in gruposMundial2026 {
+            for p in grupo.partidos {
+                lista.append((partido: p, grupo: grupo.nombre))
+            }
+        }
+        // 2) Elegimos 10 aleatorios
+        let seleccion = Array(lista.shuffled().prefix(10))
+        // 3) Simulamos cada partido
+        return seleccion.map { item in
+            let stats = MatchSimulator.simulate(partido: item.partido)
+            return (partido: item.partido, grupo: item.grupo, stats: stats)
+        }
+    }()
 
     var body: some View {
         ZStack {
@@ -30,24 +45,6 @@ struct FinalizadosView: View {
                     .foregroundColor(.black)
                     .kerning(1.5)
                     .multilineTextAlignment(.center)
-
-                    // Botón atrás circular
-                    HStack {
-                        Button {
-                            onBack?()
-                        } label: {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.black)
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    Circle()
-                                        .fill(.ultraThinMaterial)
-                                        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 2)
-                                )
-                        }
-                        Spacer()
-                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
@@ -55,72 +52,30 @@ struct FinalizadosView: View {
 
                 // SCROLL con las cards
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 14) {
-                        ForEach(partidos) { pfin in
-                            if let localEquipo = equipo(forCode: pfin.localCode),
-                               let visitanteEquipo = equipo(forCode: pfin.visitanteCode) {
-
-                                let partido = Partido(local: localEquipo, visitante: visitanteEquipo)
-
-                                // CARD estilo glass blur
-                                CardFinalizado(
-                                    partido: partido,
-                                    grupo: pfin.torneo,
-                                    marcadorLocal: pfin.golesLocal,
-                                    marcadorVisitante: pfin.golesVisitante
-                                )
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 14)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                        .fill(.ultraThinMaterial)
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                        .stroke(Color.white.opacity(0.35), lineWidth: 1)
-                                )
-                                .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 6)
-                                .padding(.horizontal, 16)
-                            }
+                    VStack(spacing: 8) {
+                        ForEach(simulados, id: \.partido.id) { item in
+                            CardFinalizado(
+                                partido: item.partido,
+                                grupo: item.grupo,
+                                marcadorLocal: item.stats.local.goals,
+                                marcadorVisitante: item.stats.visitante.goals
+                            )
+                            .padding(.horizontal, 16)
                         }
                     }
                     .padding(.vertical, 10)
                 }
             }
         }
-        .navigationBarHidden(true)
     }
-
-    // Helper para obtener equipo según código
-    private func equipo(forCode code: String) -> Equipos? {
-        let upper = code.uppercased()
-        return equiposDetails.first { $0.name.uppercased() == upper }
-    }
-}
-
-// MARK: - Modelo temporal
-struct PartidoFinalizado: Identifiable, Hashable {
-    let id = UUID()
-    let localCode: String
-    let visitanteCode: String
-    let golesLocal: Int
-    let golesVisitante: Int
-    let torneo: String
-
-    static let mock: [PartidoFinalizado] = [
-        .init(localCode: "QAT", visitanteCode: "ECU", golesLocal: 0, golesVisitante: 2, torneo: "Grupo A"),
-        .init(localCode: "FRA", visitanteCode: "AUS", golesLocal: 4, golesVisitante: 1, torneo: "Grupo D"),
-        .init(localCode: "BRA", visitanteCode: "SRB", golesLocal: 2, golesVisitante: 0, torneo: "Grupo G"),
-        .init(localCode: "QAT", visitanteCode: "ECU", golesLocal: 0, golesVisitante: 2, torneo: "Grupo A"),
-        .init(localCode: "FRA", visitanteCode: "AUS", golesLocal: 4, golesVisitante: 1, torneo: "Grupo D"),
-        .init(localCode: "BRA", visitanteCode: "SRB", golesLocal: 2, golesVisitante: 0, torneo: "Grupo G")
-    ]
 }
 
 // MARK: - Preview
 struct FinalizadosView_Previews: PreviewProvider {
     static var previews: some View {
-        FinalizadosView()
-            .previewDisplayName("Partidos Finalizados")
+        NavigationStack {
+            FinalizadosView()
+        }
+        .previewDisplayName("Partidos Finalizados (Simulados)")
     }
 }

@@ -133,9 +133,17 @@ struct MatchesView: View {
                 // Sección Finalizados (2 cards)
                 if !partidosFinalizados.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
+                        HStack{
                         Text("FINALIZADOS")
                             .font(.custom("FWC2026-NormalRegular", size: 15))
                             .padding(.horizontal, 40)
+                            NavigationLink {
+                                FinalizadosView()
+                            } label: {
+                                Text("Ver todos")
+                                    .font(.custom("FWC2026-NormalRegular", size: 13))
+                            }
+                        }
                         
                         VStack(spacing: 16) {
                             ForEach(Array(partidosFinalizados.enumerated()), id: \.offset) { _, item in

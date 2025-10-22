@@ -20,19 +20,35 @@ enum CardType: String, Codable, Hashable {
 }
 
 struct GoalEvent: Identifiable, Codable, Hashable {
-    let id = UUID()
+    let id: UUID
     let minute: Int
     let side: MatchSide
     let scorerName: String
     let assistName: String?
+
+    init(id: UUID = UUID(), minute: Int, side: MatchSide, scorerName: String, assistName: String?) {
+        self.id = id
+        self.minute = minute
+        self.side = side
+        self.scorerName = scorerName
+        self.assistName = assistName
+    }
 }
 
 struct CardEvent: Identifiable, Codable, Hashable {
-    let id = UUID()
+    let id: UUID
     let minute: Int
     let side: MatchSide
     let type: CardType
     let playerName: String
+
+    init(id: UUID = UUID(), minute: Int, side: MatchSide, type: CardType, playerName: String) {
+        self.id = id
+        self.minute = minute
+        self.side = side
+        self.type = type
+        self.playerName = playerName
+    }
 }
 
 // Estadísticas por equipo
@@ -377,5 +393,87 @@ private final class SeededRandom {
 
     func randomBool(probability p: Double) -> Bool {
         randomUnit() < max(0.0, min(1.0, p))
+    }
+}
+
+// MARK: - Próximos partidos (excluyendo finalizados)
+
+/// Modelo para usar directamente en CardProximo.
+struct UpcomingFixture: Identifiable, Hashable {
+    let id = UUID()
+    let partido: Partido
+    let grupo: String
+    let fecha: String   // "16/jul"
+    let hora: String    // "19:00"
+}
+
+enum UpcomingMatchesBuilder {
+    /// Genera próximos partidos a partir de grupos barajeados, excluyendo los ya finalizados.
+    /// - Parameters:
+    ///   - finishedStats: Lista de partidos finalizados (MatchStats) a excluir.
+    ///   - count: Cantidad de próximos partidos deseada.
+    ///   - startDate: Fecha base para asignar fechas/horas (por defecto 16 JUN 2026 19:00).
+    /// - Returns: Lista de UpcomingFixture listos para CardProximo.
+    static func generate(excluding finishedStats: [MatchStats], count: Int = 10, startDate: Date? = nil) -> [UpcomingFixture] {
+        let finishedPartidos = finishedStats.map { $0.partido }
+        return generate(excludingPartidos: finishedPartidos, count: count, startDate: startDate)
+    }
+
+    /// Variante que recibe directamente los `Partido` finalizados.
+    static func generate(excludingPartidos finished: [Partido], count: Int = 10, startDate: Date? = nil) -> [UpcomingFixture] {
+        // Clave canónica para un partido (independiente del orden local/visitante)
+        func key(for p: Partido) -> String {
+            let a = p.local.name
+            let b = p.visitante.name
+            return [a, b].sorted().joined(separator: " vs ")
+        }
+
+        let finishedKeys = Set(finished.map(key(for:)))
+
+        // Generamos grupos barajeados y sus partidos
+        let grupos = generarGruposDesdeEquipos(equiposDetails, mezclar: true)
+        var candidatos: [(partido: Partido, grupo: String)] = []
+        for g in grupos {
+            for p in g.partidos {
+                let k = key(for: p)
+                if !finishedKeys.contains(k) {
+                    candidatos.append((partido: p, grupo: g.nombre))
+                }
+            }
+        }
+
+        // Si no hay suficientes, devolvemos lo que haya.
+        let seleccion = Array(candidatos.shuffled().prefix(count))
+
+        // Asignamos fecha/hora deterministas a partir de una base.
+        let calendar = Calendar(identifier: .gregorian)
+        let baseDate: Date = {
+            if let startDate { return startDate }
+            var comps = DateComponents()
+            comps.year = 2026
+            comps.month = 6
+            comps.day = 16
+            comps.hour = 19
+            comps.minute = 0
+            return calendar.date(from: comps) ?? Date()
+        }()
+
+        let dfFecha = DateFormatter()
+        dfFecha.locale = Locale(identifier: "es_ES")
+        dfFecha.dateFormat = "dd/MMM" // ejemplo: "16/jul"
+
+        let dfHora = DateFormatter()
+        dfHora.locale = Locale(identifier: "es_ES")
+        dfHora.dateFormat = "HH:mm"
+
+        return seleccion.enumerated().map { idx, item in
+            let fecha = calendar.date(byAdding: .day, value: idx, to: baseDate) ?? baseDate
+            return UpcomingFixture(
+                partido: item.partido,
+                grupo: item.grupo,
+                fecha: dfFecha.string(from: fecha).uppercased(),
+                hora: dfHora.string(from: fecha)
+            )
+        }
     }
 }

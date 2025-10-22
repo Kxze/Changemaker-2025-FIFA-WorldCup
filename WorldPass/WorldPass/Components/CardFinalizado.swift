@@ -14,44 +14,52 @@ struct CardFinalizado: View {
     let marcadorVisitante: Int
 
     var body: some View {
-        HStack(alignment: .center, spacing:7) {
-            // Lado izquierdo: Equipo local
-            equipoView(equipo: partido.local, alignment: .leading)
-
-            // Centro: Grupo y marcador (sin minuto)
-            VStack(spacing: 6) {
-                Image("FifaPlus")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 25, height: 8)
-                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-                    .offset(y:5)
-
-                Text(grupo.uppercased())
-                    .font(.custom("FWC2026-NormalRegular", size: 8))
-                    .foregroundColor(.gray)
-
-                HStack(alignment: .center, spacing: 14) {
-                    Text("\(marcadorLocal)")
-                        .font(.custom("FWC2026-NormalBlack", size: 28))
-                    Text(":")
-                        .font(.custom("FWC2026-NormalBlack", size: 28))
-                    Text("\(marcadorVisitante)")
-                        .font(.custom("FWC2026-NormalBlack", size: 28))
-                }
-                .offset(y:-10)
-                .foregroundColor(.primary)
-                
+        ZStack {
+            HStack(spacing:110){
+                equipoView(equipo: partido.local, alignment: .leading)
+                equipoView(equipo: partido.visitante, alignment: .trailing)
             }
-            .frame(maxWidth: .infinity)
-
-            // Lado derecho: Equipo visitante
-            equipoView(equipo: partido.visitante, alignment: .trailing)
+            .offset(y:7)
+            .opacity(0.6)
+            HStack(alignment: .center, spacing:7) {
+                // Lado izquierdo: Equipo local
+                equipoView(equipo: partido.local, alignment: .leading)
+                
+                // Centro: Grupo y marcador (sin minuto)
+                VStack(spacing: 6) {
+                    Image("FifaPlus")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 25, height: 8)
+                        .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                        .offset(y:5)
+                    
+                    Text(grupo.uppercased())
+                        .font(.custom("FWC2026-NormalRegular", size: 8))
+                        .foregroundColor(.gray)
+                    
+                    HStack(alignment: .center, spacing: 14) {
+                        Text("\(marcadorLocal)")
+                            .font(.custom("FWC2026-NormalBlack", size: 28))
+                        Text(":")
+                            .font(.custom("FWC2026-NormalBlack", size: 28))
+                        Text("\(marcadorVisitante)")
+                            .font(.custom("FWC2026-NormalBlack", size: 28))
+                    }
+                    .offset(y:-10)
+                    .foregroundColor(.primary)
+                    
+                }
+                .frame(maxWidth: .infinity)
+                
+                // Lado derecho: Equipo visitante
+                equipoView(equipo: partido.visitante, alignment: .trailing)
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .frame(width: 350,height: 80)
+            .glassEffect(in: .rect(cornerRadius: 25, style: .continuous))
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
-        .frame(width: 350,height: 80)
-        .glassEffect(in: .rect(cornerRadius: 25, style: .continuous))
     }
 
     private func equipoView(equipo: Equipos, alignment: HorizontalAlignment) -> some View {

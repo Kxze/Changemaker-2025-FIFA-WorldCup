@@ -28,27 +28,9 @@ struct FinalizadosView: View {
     }()
 
     var body: some View {
-        ZStack {
-            // Fondo blanco total
-            Color.white
-                .ignoresSafeArea()
+      
 
-            VStack(spacing: 0) {
-                // HEADER
-                ZStack {
-                    // Título centrado
-                    VStack(spacing: -6) {
-                        Text("PARTIDOS")
-                        Text("FINALIZADOS")
-                    }
-                    .font(.custom("FWC2026-NormalBlack", size: 20))
-                    .foregroundColor(.black)
-                    .kerning(1.5)
-                    .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
-                .padding(.bottom, 20)
+        
 
                 // SCROLL con las cards
                 ScrollView(.vertical, showsIndicators: false) {
@@ -63,12 +45,21 @@ struct FinalizadosView: View {
                             .padding(.horizontal, 16)
                         }
                     }
-                    .padding(.vertical, 10)
+                }
+                .scrollEdgeEffectStyle(.soft, for: .bottom)
+                .toolbar{
+                
+                ToolbarItem(placement: .title) {
+                    VStack(spacing: -5){
+                        Text("PARTIDOS")
+                            .font(.custom("FWC2026-NormalBlack", size: 20))
+                        Text("FINALIZADOS")
+                            .font(.custom("FWC2026-NormalBlack", size: 20))
+                    }
+                }
                 }
             }
         }
-    }
-}
 
 // MARK: - Preview
 struct FinalizadosView_Previews: PreviewProvider {

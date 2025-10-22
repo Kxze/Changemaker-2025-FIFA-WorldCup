@@ -73,13 +73,13 @@ struct MatchesView: View {
         }
     }
     
-    // Partidos finalizados: tomamos 2 de la lista y les asignamos marcador ficticio (sin minuto)
+    // Partidos finalizados: tomamos 2 de la lista y simulamos marcador con MatchSimulator
     private var partidosFinalizados: [(partido: Partido, grupo: String, local: Int, visitante: Int)] {
         let base = todosLosPartidos.shuffled()
         let seleccion = Array(base.prefix(2))
-        return seleccion.enumerated().map { idx, item in
-            let m = marcadorFicticio(index: idx + 7)
-            return (partido: item.partido, grupo: item.grupo, local: m.local, visitante: m.visitante)
+        return seleccion.map { item in
+            let stats = MatchSimulator.simulate(partido: item.partido)
+            return (partido: item.partido, grupo: item.grupo, local: stats.local.goals, visitante: stats.visitante.goals)
         }
     }
     
@@ -101,21 +101,24 @@ struct MatchesView: View {
                     
                 }
                 
-                // Sección EN VIVO (2 cards)
+                // Sección EN VIVO (igual a MainView)
                 if !partidosEnVivo.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("HOY")
+                            .font(.custom("FWC2026-NormalBlack", size: 20))
                         HStack{
-                            Circle()
+                            Image(systemName: "circle.fill")
                                 .foregroundStyle(.red)
-                                .frame(width: 20, height: 20)
+                                .glassEffect()
                             Text("EN VIVO")
                                 .font(.custom("FWC2026-NormalRegular", size: 15))
-                               
                         }
-                        .padding(.horizontal, 40)
-                        
-                        VStack(spacing: 16) {
-                            ForEach(Array(partidosEnVivo.enumerated()), id: \.offset) { _, item in
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .center, spacing: 50) {
+                            ForEach(Array(partidosEnVivo.enumerated()), id: \.offset) { idx, item in
                                 CardEnVivo(
                                     partido: item.partido,
                                     grupo: item.grupo,
@@ -123,17 +126,27 @@ struct MatchesView: View {
                                     marcadorVisitante: item.visitante,
                                     minuto: item.minuto
                                 )
-                                .frame(maxWidth: .infinity)
-                                .padding(.horizontal, 20)
+                                .frame(width: 300)
+                                .scrollTransition(.interactive, axis: .horizontal) { content, phase in
+                                    content
+                                        .scaleEffect(phase.isIdentity ? 1.0 : 0.94)
+                                        .opacity(phase.isIdentity ? 1.0 : 0.85)
+                                }
+                                .zIndex(1)
                             }
                         }
+                        .padding(.horizontal, 40)
+                        .contentShape(Rectangle())
                     }
+                    .scrollClipDisabled(true)
+                    .scrollTargetBehavior(.viewAligned)
+                    .scrollTargetLayout()
                 }
                 
                 // Sección Finalizados (2 cards)
                 if !partidosFinalizados.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack{
+                        HStack(spacing: 120){
                         Text("FINALIZADOS")
                             .font(.custom("FWC2026-NormalRegular", size: 15))
                             .padding(.horizontal, 40)
@@ -143,6 +156,7 @@ struct MatchesView: View {
                                 Text("Ver todos")
                                     .font(.custom("FWC2026-NormalRegular", size: 13))
                             }
+                            .foregroundStyle(.secondary)
                         }
                         
                         VStack(spacing: 16) {
@@ -163,12 +177,17 @@ struct MatchesView: View {
                 // Sección Próximos (igual padding que Finalizados)
                 if !partidosProximos.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack{
+                        HStack(spacing:140){
                             Text("PRÓXIMOS")
                                 .font(.custom("FWC2026-NormalRegular", size: 15))
                                 .padding(.horizontal, 40)
-                            Spacer()
-                        }
+                            NavigationLink {
+                                NextMatchesView()
+                            } label: {
+                                Text("Ver todos")
+                                    .font(.custom("FWC2026-NormalRegular", size: 13))
+                            }
+                            .foregroundStyle(.secondary)                        }
                         
                         VStack(spacing: 16) {
                             ForEach(Array(partidosProximos.enumerated()), id: \.offset) { _, item in
@@ -186,6 +205,7 @@ struct MatchesView: View {
                 }
             }
         }
+        .scrollEdgeEffectStyle(.soft, for: .vertical)
         .toolbar{
             ToolbarItem(placement: .topBarLeading) {
                 NavigationLink {
@@ -199,15 +219,11 @@ struct MatchesView: View {
                 Text("PARTIDOS")
                     .font(.custom("FWC2026-NormalBlack", size: 20))
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    ProfileView()
-                } label: {
-                    Image(systemName: "person")
-                        .foregroundStyle(.secondary)
-                }
-            }
+            ToolbarSpacer(.flexible, placement: .bottomBar)
+
+            
         }
+                
     }
 }
 

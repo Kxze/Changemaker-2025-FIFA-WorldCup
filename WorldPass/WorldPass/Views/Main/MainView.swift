@@ -131,6 +131,9 @@ struct MainView: View {
             ToolbarItem(placement: .topBarLeading) {
                 NavigationLink {
                     Tournament()
+                        .toolbar(.hidden, for: .navigationBar)
+                        // Si usas TabView y quieres ocultar la barra inferior también:
+                        //.toolbar(.hidden, for: .tabBar)
                 } label: {
                     Image(systemName: "globe.americas.fill")
                         .foregroundStyle(.secondary)
@@ -142,13 +145,29 @@ struct MainView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     ProfileView()
+                        .toolbar(.hidden, for: .navigationBar)
+                        //.toolbar(.hidden, for: .tabBar)
                 } label: {
                     Image(systemName: "person")
                         .foregroundStyle(.secondary)
                 }
             }
         }
-        
+        .overlay(alignment: .bottomTrailing) {
+            NavigationLink {
+                ZayuIntroView()
+                    .toolbar(.hidden, for: .navigationBar)
+                    //.toolbar(.hidden, for: .tabBar)
+            } label: {
+                Image(systemName: "apple.intelligence")
+                    .font(.custom("", size: 25))
+                    .foregroundStyle(.gray)
+                    .padding(12)
+                    .glassEffect()
+            }
+            .padding(.trailing, 30)  // margen desde el borde izquierdo
+        }
+
         
     }
 }

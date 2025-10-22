@@ -14,38 +14,48 @@ struct CardProximo: View {
     let hora: String    // Ej: "19:00"
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
-            // Lado izquierdo: Equipo local
-            equipoView(equipo: partido.local, alignment: .leading)
-
-            // Centro: Grupo, fecha y hora
-            VStack {
-                Text(grupo.uppercased())
-                    .font(.custom("FWC2026-NormalRegular", size: 12))
-                    .foregroundColor(.gray)
-                    .offset(y:-5)
-
-                VStack(spacing: 2) {
-                    Text(fecha)
-                        .font(.custom("FWC2026-NormalBlack", size: 18))
-                        .foregroundColor(.primary)
-                    Text(hora)
-                        .font(.custom("FWC2026-NormalBlack", size: 12))
-                        .foregroundColor(.primary)
-                }
-                .offset(y:-10)
+        ZStack{
+            HStack(spacing:110){
+                equipoView(equipo: partido.local, alignment: .leading)
+                equipoView(equipo: partido.visitante, alignment: .trailing)
             }
-            .frame(maxWidth: .infinity)
-
-            // Lado derecho: Equipo visitante
-            equipoView(equipo: partido.visitante, alignment: .trailing)
+            .offset(y:5)
+            .opacity(0.6)
+            HStack(alignment: .center, spacing: -5) {
+                // Lado izquierdo: Equipo local
+                equipoView(equipo: partido.local, alignment: .leading)
+                
+                // Centro: Grupo, fecha y hora
+                VStack(spacing:5) {
+                    Text(grupo.uppercased())
+                        .font(.custom("FWC2026-NormalRegular", size: 12))
+                        .foregroundColor(.gray)
+                        .offset(y:-5)
+                    
+                    VStack(alignment:.center,spacing: -5) {
+                        Text(hora)
+                            .font(.custom("FWC2026-NormalRegular", size: 14))
+                            .foregroundColor(.primary)
+                        Text(fecha)
+                            .font(.custom("FWC2026-NormalBlack", size: 15))
+                            .foregroundColor(.primary)
+                        
+                    }
+                    .offset(y:-10)
+                }
+                .frame(maxWidth: .infinity)
+                
+                // Lado derecho: Equipo visitante
+                equipoView(equipo: partido.visitante, alignment: .trailing)
+                
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .ignoresSafeArea()
+            .glassEffect(in: .rect(cornerRadius: 30, style: .continuous))
+            .foregroundStyle(.thinMaterial)
+            .frame(width: 380)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
-        .ignoresSafeArea()
-        .glassEffect(in: .rect(cornerRadius: 30, style: .continuous))
-        .foregroundStyle(.thinMaterial)
-        .frame(width: 350)
     }
 
     private func equipoView(equipo: Equipos, alignment: HorizontalAlignment) -> some View {
@@ -53,7 +63,7 @@ struct CardProximo: View {
             if alignment == .leading {
                 // Nombre primero, luego bandera
                 Text(equipo.name)
-                    .font(.custom("FWC2026-NormalBlack", size: 15))
+                    .font(.custom("FWC2026-NormalRegular", size: 14))
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.trailing)
                     .lineLimit(2)
@@ -74,7 +84,7 @@ struct CardProximo: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
 
                 Text(equipo.name)
-                    .font(.custom("FWC2026-NormalBlack", size: 15))
+                    .font(.custom("FWC2026-NormalRegular", size: 14))
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)

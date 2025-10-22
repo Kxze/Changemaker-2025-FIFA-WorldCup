@@ -20,40 +20,26 @@ struct ToolBarView: View {
     @EnvironmentObject var tabSelection: TabSelection
 
     var body: some View {
-        TabView(selection: $tabSelection.selection) {
-            NavigationStack {
-                MainView()
+        TabView{
+            Tab("", systemImage: "house.fill"){
+                NavigationStack{
+                    MainView()
+                }
             }
-            // Anula el tinte dentro del contenido para no afectar botones
-            .tint(nil)
-            .tabItem {
-                Label("Main", systemImage: "house")
+            
+            Tab("", systemImage: "soccerball.inverse"){
+                NavigationStack{
+                    MatchesView()
+                }
             }
-            .tag(TabSelection.TabID.main)
-
-            NavigationStack {
-                MatchesView()
+            Tab("", systemImage: "wallet.bifold") {
+                NavigationStack{
+                    WalletView()
+                }
             }
-            // Anula el tinte dentro del contenido para no afectar botones
-            .tint(nil)
-            .tabItem {
-                Label("Matches", systemImage: "soccerball.inverse")
-            }
-            .tag(TabSelection.TabID.matches)
-
-            NavigationStack {
-                WalletView()
-            }
-            // Anula el tinte dentro del contenido para no afectar botones
-            .tint(nil)
-            .tabItem {
-                Label("Wallet", systemImage: "wallet.bifold.fill")
-            }
-            .tag(TabSelection.TabID.wallet)
+            
         }
         .tabBarMinimizeBehavior(.onScrollDown)
-        // Este tinte solo debe afectar los iconos/estado de la Tab Bar
-        .tint(tintColor(for: tabSelection.selection))
     }
 
     private func tintColor(for tab: TabSelection.TabID) -> Color {

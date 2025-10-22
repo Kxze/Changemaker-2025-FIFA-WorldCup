@@ -160,70 +160,72 @@ struct ChatbotFlowView: View {
 
 struct ZayuIntroView: View {
     var body: some View {
-        ZStack {
-            Image("FondoVerde")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-
-            VStack {
-                HStack {
-                    // Botón atrás opcional (si llegas aquí desde otro punto)
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.95))
-                        .frame(width: 34, height: 34)
-                        .background(Color.white.opacity(0.18))
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
-                        .opacity(0) // oculto en la intro (solo decorativo como en el mock)
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 10)
-
-                Spacer(minLength: 8)
-
-                // Título
-                Text("¡HOLA,\nSOY ZAYU!")
-                    .multilineTextAlignment(.center)
-                    .font(.fwcTitle(44))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
-                    .padding(.bottom, 8)
-
-                // Personaje
-                Image("Zayu")
+        NavigationStack {
+            ZStack {
+                Image("FondoVerde")
                     .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 260)
-                    .padding(.vertical, 6)
-
-                Spacer()
-
-                // Subtítulo
-                Text("¿Cómo puedo ayudarte?")
-                    .font(.fwcText(18))
-                    .foregroundStyle(.white.opacity(0.95))
-                    .padding(.bottom, 8)
-
-                // Botón Comenzar → navega al chat
-                NavigationLink {
-                    IAPrediccionesView()
-                        .navigationBarBackButtonHidden(true)
-                } label: {
-                    Text("Comenzar")
-                        .font(.fwcTitle(17))
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(
-                            Capsule()
-                                .fill(.white)
-                                .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
-                        )
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                
+                VStack {
+                    HStack {
+                        // Botón atrás opcional (si llegas aquí desde otro punto)
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.95))
+                            .frame(width: 34, height: 34)
+                            .background(Color.white.opacity(0.18))
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
+                            .opacity(0) // oculto en la intro (solo decorativo como en el mock)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 10)
+                    
+                    Spacer(minLength: 8)
+                    
+                    // Título
+                    Text("¡HOLA,\nSOY ZAYU!")
+                        .multilineTextAlignment(.center)
+                        .font(.fwcTitle(44))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                        .padding(.bottom, 8)
+                    
+                    // Personaje
+                    Image("Zayu")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 260)
+                        .padding(.vertical, 6)
+                    
+                    Spacer()
+                    
+                    // Subtítulo
+                    Text("¿Cómo puedo ayudarte?")
+                        .font(.fwcText(18))
+                        .foregroundStyle(.white.opacity(0.95))
+                        .padding(.bottom, 8)
+                    
+                    // Botón Comenzar → navega al chat
+                    NavigationLink {
+                        IAPrediccionesView()
+                            .navigationBarBackButtonHidden(true)
+                    } label: {
+                        Text("Comenzar")
+                            .font(.fwcTitle(17))
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(.white)
+                                    .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+                            )
+                    }
+                    .padding(.bottom, 28)
                 }
-                .padding(.bottom, 28)
             }
         }
     }
@@ -258,22 +260,25 @@ struct IAPrediccionesView: View {
                 topBar
 
                 ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 14) {
-                            ForEach(messages) { msg in
-                                ChatBubble(message: msg).id(msg.id)
+                    GeometryReader { geo in
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 14) {
+                                ForEach(messages) { msg in
+                                    ChatBubble(message: msg, containerWidth: geo.size.width)
+                                        .id(msg.id)
+                                }
+                                if isLoading {
+                                    TypingBubble()
+                                }
                             }
-                            if isLoading {
-                                TypingBubble()
-                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 14)
+                            .padding(.bottom, 110)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 14)
-                        .padding(.bottom, 110)
-                    }
-                    .onChange(of: messages.count) { _ in
-                        withAnimation(.easeOut(duration: 0.25)) {
-                            proxy.scrollTo(messages.last?.id, anchor: .bottom)
+                        .onChange(of: messages.count) { _, _ in
+                            withAnimation(.easeOut(duration: 0.25)) {
+                                proxy.scrollTo(messages.last?.id, anchor: .bottom)
+                            }
                         }
                     }
                 }
@@ -386,6 +391,7 @@ struct IAPrediccionesView: View {
     
     private struct ChatBubble: View {
         let message: Message
+        let containerWidth: CGFloat
 
         var body: some View {
             VStack(alignment: message.isUser ? .trailing : .leading, spacing: 6) {
@@ -425,7 +431,7 @@ struct IAPrediccionesView: View {
                             .font(.fwcText(16))
                             .foregroundStyle(.black)
                             .lineSpacing(2)
-                            .frame(maxWidth: UIScreen.main.bounds.width * 0.75, alignment: .leading)
+                            .frame(maxWidth: containerWidth * 0.75, alignment: .leading)
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)

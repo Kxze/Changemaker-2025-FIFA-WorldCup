@@ -255,7 +255,7 @@ struct StatCard: View {
     let icon: String
     let value: String
     let label: String
-    private let cardHeight: CGFloat = 74 // altura fija para uniformidad
+    private let cardHeight: CGFloat = 56 // altura fija para uniformidad
 
     var body: some View {
         HStack(spacing: 10) {

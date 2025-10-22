@@ -49,7 +49,7 @@ struct WalletView: View {
                 } else {
                     // Parámetros de la pila
                     let cardHeight: CGFloat = 180
-                    let gap: CGFloat = 28 // separación visible entre tarjetas apiladas
+                    let gap: CGFloat = 78 // separación visible entre tarjetas apiladas
 
                     ZStack(alignment: .top) {
                         ForEach(cards.indices, id: \.self) { index in
@@ -94,8 +94,7 @@ struct WalletView: View {
                         }
                     }
                     // Altura total para que el ScrollView permita ver toda la pila
-                    .frame(height: cardHeight + CGFloat(max(0, cards.count - 1)) * gap + 16)
-                    .padding(.top, 12)
+                    .frame(height: cardHeight + CGFloat(max(0, cards.count - 1)) * gap + -100)
                     .padding(.horizontal)
                 }
             }

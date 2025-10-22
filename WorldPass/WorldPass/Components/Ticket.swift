@@ -22,8 +22,11 @@ struct Ticket: View {
                         Text("16 JULIO")
                     }
                 }
-                Rectangle()
-                    .frame(width: 370, height: 150)
+                Image("FondoRojo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 490, height: 150)
+                    .clipped()
                 HStack{
                     Text("GRUPO A - PARTIDO INAGURAL")
                     

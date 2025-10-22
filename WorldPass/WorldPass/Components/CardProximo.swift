@@ -45,7 +45,7 @@ struct CardProximo: View {
         .ignoresSafeArea()
         .glassEffect(in: .rect(cornerRadius: 30, style: .continuous))
         .foregroundStyle(.thinMaterial)
-        .frame(width: 400)
+        .frame(width: 350)
     }
 
     private func equipoView(equipo: Equipos, alignment: HorizontalAlignment) -> some View {

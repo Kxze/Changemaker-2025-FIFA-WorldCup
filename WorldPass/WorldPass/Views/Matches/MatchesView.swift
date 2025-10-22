@@ -8,6 +8,36 @@
 import SwiftUI
 
 struct MatchesView: View {
+    // MARK: - Estado y utilidades del calendario (antes en CalendarPopUp)
+    @State private var showCalendar = false
+    @State private var selectedDate: Date = Date()
+
+    // Rango del Mundial 2026: 11 Jun 2026 – 19 Jul 2026
+    private static let worldCupStart: Date = {
+        let cal = Calendar(identifier: .gregorian)
+        var comps = DateComponents()
+        comps.year = 2026
+        comps.month = 6
+        comps.day = 11
+        return cal.date(from: comps) ?? Date()
+    }()
+
+    private static let worldCupEnd: Date = {
+        let cal = Calendar(identifier: .gregorian)
+        var comps = DateComponents()
+        comps.year = 2026
+        comps.month = 7
+        comps.day = 19
+        return cal.date(from: comps) ?? Date()
+    }()
+
+    private var worldCupRange: ClosedRange<Date> {
+        let cal = Calendar(identifier: .gregorian)
+        let start = cal.startOfDay(for: Self.worldCupStart)
+        let end = cal.date(bySettingHour: 23, minute: 59, second: 59, of: Self.worldCupEnd) ?? Self.worldCupEnd
+        return start...end
+    }
+
     // Fuente: todos los partidos con su grupo asociado en una lista plana
     private var todosLosPartidos: [(partido: Partido, grupo: String)] {
         var items: [(partido: Partido, grupo: String)] = []
@@ -95,11 +125,64 @@ struct MatchesView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack{
-                    CalendarView().frame(width: 380)
+            VStack(alignment: .leading, spacing: 15) {
+                HStack(spacing: -13) {
+                    // Calendario de días (scroll horizontal compacto)
+                    CalendarView()
+                        .offset(x:20)
                     
+                    // Botón que abre el calendario (popover con DatePicker)
+                    Button {
+                        showCalendar = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "calendar")
+                                .resizable()
+                                .frame(width: 30, height: 30)
+                        }
+                        .padding(.horizontal, 12)
+                    }
+                    .buttonStyle(.glass)
+                    .popover(
+                        isPresented: $showCalendar,
+                        attachmentAnchor: .rect(.bounds),
+                        arrowEdge: .top
+                    ) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            DatePicker(
+                                "Selecciona una fecha",
+                                selection: $selectedDate,
+                                in: worldCupRange,
+                                displayedComponents: [.date]
+                            )
+                            .datePickerStyle(.graphical)
+                            .labelsHidden()
+                            .environment(\.locale, Locale(identifier: "es_ES"))
+
+                            HStack {
+                                Text("Fecha seleccionada:")
+                                    .font(.custom("FWC2026-NormalRegular", size: 12))
+                                    .foregroundStyle(.secondary)
+                                Text(selectedDate.formatted(date: .abbreviated, time: .omitted).uppercased())
+                                    .font(.custom("FWC2026-NormalBlack", size: 13))
+                            }
+
+                            HStack {
+                                Spacer()
+                                Button("Cerrar") {
+                                    showCalendar = false
+                                }
+                                .buttonStyle(.borderedProminent)
+                            }
+                        }
+                        .padding()
+                        .frame(minWidth: 360, idealWidth: 420, maxWidth: 480,
+                               minHeight: 280, idealHeight: 320, maxHeight: 380)
+                        .presentationCompactAdaptation(.popover)
+                    }
                 }
+                
+                .padding(.horizontal,20)
                 
                 // Sección EN VIVO (igual a MainView)
                 if !partidosEnVivo.isEmpty {
@@ -114,7 +197,7 @@ struct MatchesView: View {
                                 .font(.custom("FWC2026-NormalRegular", size: 15))
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 40)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(alignment: .center, spacing: 50) {
@@ -135,7 +218,7 @@ struct MatchesView: View {
                                 .zIndex(1)
                             }
                         }
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, 60)
                         .contentShape(Rectangle())
                     }
                     .scrollClipDisabled(true)
@@ -197,7 +280,6 @@ struct MatchesView: View {
                                     fecha: item.fecha,
                                     hora: item.hora
                                 )
-                                .frame(maxWidth: .infinity)
                                 .padding(.horizontal, 20)
                             }
                         }
@@ -219,9 +301,6 @@ struct MatchesView: View {
                 Text("PARTIDOS")
                     .font(.custom("FWC2026-NormalBlack", size: 20))
             }
-            ToolbarSpacer(.flexible, placement: .bottomBar)
-
-            
         }
                 
     }

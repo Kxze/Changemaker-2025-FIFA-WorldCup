@@ -134,9 +134,7 @@ struct MainView: View {
             ToolbarItem(placement: .topBarLeading) {
                 NavigationLink {
                     Tournament()
-                        .toolbar(.hidden, for: .navigationBar)
-                        // Si usas TabView y quieres ocultar la barra inferior también:
-                        //.toolbar(.hidden, for: .tabBar)
+                    // No ocultamos la barra de navegación para que aparezca "Regresar"
                 } label: {
                     Image(systemName: "globe.americas.fill")
                         .foregroundStyle(.secondary)
@@ -148,8 +146,7 @@ struct MainView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     ProfileView()
-                        .toolbar(.hidden, for: .navigationBar)
-                        //.toolbar(.hidden, for: .tabBar)
+                    // No ocultamos la barra para tener back si se requiere
                 } label: {
                     Image(systemName: "person")
                         .foregroundStyle(.secondary)

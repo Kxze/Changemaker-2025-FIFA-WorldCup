@@ -9,7 +9,7 @@ import SwiftUI
 
 struct Tournament: View {
     var body: some View {
-        GlassEffectContainer {
+         
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     // Título de la sección
@@ -20,15 +20,23 @@ struct Tournament: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
-                    
-                    // Lista de grupos
-                    LazyVStack(spacing: 16) {
-                        ForEach(gruposMundial2026) { grupo in
-                            GroupCapsuleView(grupo: grupo)
-                                .padding(.horizontal, 20)
+                    ZStack{
+                        LazyVStack(spacing: 16) {
+                            ForEach(gruposMundial2026) { grupo in
+                                GroupCapsuleView(grupo: grupo)
+                            }
+                            .offset(x:15, y:10)
+                            .opacity(0.9)
                         }
+                        // Lista de grupos
+                        LazyVStack(spacing: 16) {
+                            ForEach(gruposMundial2026) { grupo in
+                                GroupCapsuleView(grupo: grupo)
+                                    .padding(.horizontal, 20)
+                            }
+                        }
+                        .padding(.bottom, 16)
                     }
-                    .padding(.bottom, 16)
                 }
             }
             .toolbar{
@@ -38,7 +46,7 @@ struct Tournament: View {
             }
         }
     }
-}
+
 
 private struct GroupCapsuleView: View {
     let grupo: Grupo
@@ -90,7 +98,6 @@ private struct MiniTeamQuadrant: View {
                 .resizable()
                 .scaledToFill()
                 .frame(width: 44, height: 30)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
 
             // 3) Puntaje
             Text("\(puntos) pts")
@@ -98,11 +105,9 @@ private struct MiniTeamQuadrant: View {
                 .foregroundColor(.primary)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .glassEffect(in: .rect(cornerRadius: 25, style: .continuous))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .glassEffect(in: .rect(cornerRadius: 25, style: .continuous))
     }
 }
 

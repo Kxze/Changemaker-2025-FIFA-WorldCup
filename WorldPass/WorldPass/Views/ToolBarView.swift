@@ -21,7 +21,8 @@ struct ToolBarView: View {
 
     var body: some View {
         TabView{
-            Tab("", systemImage: "house.fill"){
+            Tab("", systemImage: "house.fill")
+            {
                 NavigationStack{
                     MainView()
                 }

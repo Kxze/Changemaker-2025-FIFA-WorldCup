@@ -53,6 +53,9 @@ struct MainView: View {
         return (local, visitante, minuto)
     }
     
+    // --- AGREGADO: controlar el sheet del chat
+    @State private var showChatbotSheet = false
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -153,11 +156,10 @@ struct MainView: View {
                 }
             }
         }
+        // --- CAMBIADO: ahora es un botón que abre el sheet del chat
         .overlay(alignment: .bottomTrailing) {
-            NavigationLink {
-                ZayuIntroView()
-                    .toolbar(.hidden, for: .navigationBar)
-                    //.toolbar(.hidden, for: .tabBar)
+            Button {
+                showChatbotSheet = true
             } label: {
                 Image(systemName: "apple.intelligence")
                     .font(.custom("", size: 25))
@@ -165,10 +167,14 @@ struct MainView: View {
                     .padding(12)
                     .glassEffect()
             }
-            .padding(.trailing, 30)  // margen desde el borde izquierdo
+            .padding(.trailing, 30)
         }
-
-        
+        // --- NUEVO: sheet con el chat
+        .sheet(isPresented: $showChatbotSheet) {
+            ChatbotFlowView()
+                .presentationDetents([.large]) // Puedes ajustar: [.medium, .large]
+                .presentationDragIndicator(.visible)
+        }
     }
 }
 

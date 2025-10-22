@@ -148,7 +148,7 @@ struct WalletView: View {
             Button("Eliminar", role: .destructive) {
                 if let i = indexPendingDeletion, cards.indices.contains(i) {
                     withAnimation(.spring) {
-                        cards.remove(at: i)
+                        _ = cards.remove(at: i) // discard removed element to avoid unused result warning
                     }
                 }
                 indexPendingDeletion = nil

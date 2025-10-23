@@ -27,6 +27,13 @@ struct WalletView: View {
          backgroundImageName: "CardM")
     ]
 
+    // Boletos apilados
+    @State private var tickets: [(qrPayload: String, theme: Ticket.Theme)] = [
+        (qrPayload: "{\"uuid\":\"WALLET-TICKET-001\",\"match\":\"MEX-NED\",\"seat\":\"14-F\"}", theme: .rojo),
+        (qrPayload: "{\"uuid\":\"WALLET-TICKET-002\",\"match\":\"USA-CAN\",\"seat\":\"22-B\"}", theme: .azul),
+        (qrPayload: "{\"uuid\":\"WALLET-TICKET-003\",\"match\":\"ARG-BRA\",\"seat\":\"07-A\"}", theme: .verde)
+    ]
+
     // Sheets
     @State private var showAddCardSheet: Bool = false
     @State private var showReaderSheet: Bool = false
@@ -38,9 +45,13 @@ struct WalletView: View {
     // Tarjeta seleccionada para animarla “fuera” de la pila
     @State private var selectedIndex: Int? = nil
 
+    // Boleto seleccionado para levantarlo visualmente
+    @State private var selectedTicketIndex: Int? = nil
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            VStack(spacing: 175) {
+                // Sección tarjetas de pago (pila existente)
                 if cards.isEmpty {
                     Text("Sin tarjetas aún")
                         .font(.custom("FWC2026-NormalRegular", size: 14))
@@ -97,6 +108,61 @@ struct WalletView: View {
                     .frame(height: cardHeight + CGFloat(max(0, cards.count - 1)) * gap + -100)
                     .padding(.horizontal)
                 }
+
+                // Un Ticket dentro del VStack - ahora apilados
+                VStack(alignment: .leading, spacing: -30) {
+                    Text("BOLETOS")
+                        .font(.custom("FWC2026-NormalBlack", size: 20))
+
+                    // Parámetros de la pila de boletos
+                    let ticketBaseHeight: CGFloat = 520      // altura interna del Ticket
+                    let ticketScale: CGFloat = 0.85          // misma escala que usabas antes
+                    let ticketHeight: CGFloat = ticketBaseHeight * ticketScale
+                    let ticketGap: CGFloat = 78               // separación visible entre boletos apilados
+
+                    if tickets.isEmpty {
+                        Text("Sin boletos aún")
+                            .font(.custom("FWC2026-NormalRegular", size: 14))
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 12)
+                    } else {
+                        ZStack(alignment: .top) {
+                            ForEach(tickets.indices, id: \.self) { idx in
+                                let t = tickets[idx]
+                                let isSelected = selectedTicketIndex == idx
+                                let baseOffsetY = CGFloat(idx) * ticketGap
+
+                                Ticket(qrPayload: t.qrPayload, theme: t.theme)
+                                    .scaleEffect(ticketScale)
+                                    .shadow(color: .black.opacity(isSelected ? 0.22 : 0.12),
+                                            radius: isSelected ? 12 : 10,
+                                            x: 0,
+                                            y: isSelected ? 10 : 6)
+                                    .offset(y: baseOffsetY + (isSelected ? -40 : 0))
+                                    .scaleEffect(isSelected ? 0.88 : ticketScale, anchor: .top)
+                                    .opacity(isSelected ? 1.0 : 0.99)
+                                    .zIndex(isSelected ? 100 : Double(idx))
+                                    .onTapGesture {
+                                        // Pequeña animación de levantar el boleto al tocarlo
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                                            selectedTicketIndex = idx
+                                        }
+                                        // Devolverlo después de un breve momento
+                                        Task {
+                                            try? await Task.sleep(nanoseconds: 500_000_000)
+                                            withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
+                                                selectedTicketIndex = nil
+                                            }
+                                        }
+                                    }
+                            }
+                        }
+                        // Altura total para permitir el scroll de toda la pila de boletos
+                        .frame(height: ticketHeight + CGFloat(max(0, tickets.count - 1)) * ticketGap + 20)
+                        .padding(.horizontal)
+                    }
+                }
+                .padding(.bottom, 8)
             }
             .padding(.bottom, 32)
         }
@@ -147,7 +213,7 @@ struct WalletView: View {
             Button("Eliminar", role: .destructive) {
                 if let i = indexPendingDeletion, cards.indices.contains(i) {
                     withAnimation(.spring) {
-                        _ = cards.remove(at: i) // discard removed element to avoid unused result warning
+                        _ = cards.remove(at: i)
                     }
                 }
                 indexPendingDeletion = nil

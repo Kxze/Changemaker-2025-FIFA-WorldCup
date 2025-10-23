@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct WalletView: View {
+    // Namespace para transiciones suaves entre layouts
+    @Namespace private var ticketNamespace
+
     // Modelo mínimo: guardamos número completo (16 dígitos) y datos básicos
     @State private var cards: [(holderName: String, cardNumber: String, expiry: String, brand: String, backgroundImageName: String)] = [
         (holderName: "Alex Smith",
@@ -27,7 +30,7 @@ struct WalletView: View {
          backgroundImageName: "CardM")
     ]
 
-    // Boletos apilados
+    // Boletos
     @State private var tickets: [(qrPayload: String, theme: Ticket.Theme)] = [
         (qrPayload: "{\"uuid\":\"WALLET-TICKET-001\",\"match\":\"MEX-NED\",\"seat\":\"14-F\"}", theme: .rojo),
         (qrPayload: "{\"uuid\":\"WALLET-TICKET-002\",\"match\":\"USA-CAN\",\"seat\":\"22-B\"}", theme: .azul),
@@ -45,8 +48,10 @@ struct WalletView: View {
     // Tarjeta seleccionada para animarla “fuera” de la pila
     @State private var selectedIndex: Int? = nil
 
-    // Boleto seleccionado para levantarlo visualmente
-    @State private var selectedTicketIndex: Int? = nil
+    // Estados de interacción con boletos (carrusel)
+    @State private var isCarouselOpen: Bool = false
+    @State private var currentTicketIndex: Int = 0
+    @State private var dragOffsetX: CGFloat = 0
 
     var body: some View {
         ScrollView {
@@ -59,7 +64,7 @@ struct WalletView: View {
                         .padding(.top, 40)
                 } else {
                     // Parámetros de la pila
-                    let cardHeight: CGFloat = 180
+                    let cardHeight: CGFloat = 170
                     let gap: CGFloat = 78 // separación visible entre tarjetas apiladas
 
                     ZStack(alignment: .top) {
@@ -75,11 +80,9 @@ struct WalletView: View {
                                 brand: card.brand,
                                 backgroundImageName: card.backgroundImageName,
                                 onOpenReader: {
-                                    // Animar la tarjeta para que “salga” de la pila y luego abrir el lector
                                     withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
                                         selectedIndex = index
                                     }
-                                    // Opcional: abrir el lector tras un pequeño retraso para apreciar la animación
                                     Task {
                                         try? await Task.sleep(nanoseconds: 350_000_000)
                                         showReaderSheet = true
@@ -91,7 +94,6 @@ struct WalletView: View {
                                 }
                             )
                             .frame(height: cardHeight)
-                            // Apilado: desplazamiento por índice + “salida” si está seleccionada
                             .offset(y: baseOffsetY + (isSelected ? -40 : 0))
                             .scaleEffect(isSelected ? 1.03 : 1.0)
                             .shadow(color: .black.opacity(isSelected ? 0.25 : 0.15),
@@ -99,26 +101,28 @@ struct WalletView: View {
                                     x: 0,
                                     y: isSelected ? 10 : 4)
                             .opacity(isSelected ? 1.0 : 0.98)
-                            // La seleccionada al frente
                             .zIndex(isSelected ? 100 : Double(index))
                             .animation(.spring(response: 0.4, dampingFraction: 0.85), value: selectedIndex)
                         }
                     }
-                    // Altura total para que el ScrollView permita ver toda la pila
                     .frame(height: cardHeight + CGFloat(max(0, cards.count - 1)) * gap + -100)
                     .padding(.horizontal)
                 }
 
-                // Un Ticket dentro del VStack - ahora apilados
-                VStack(alignment: .leading, spacing: -30) {
+                // Sección BOLETOS: apilados → carrusel con drag (con matchedGeometryEffect)
+                VStack(alignment: .leading) {
                     Text("BOLETOS")
                         .font(.custom("FWC2026-NormalBlack", size: 20))
+                        .padding(.horizontal,10)
 
-                    // Parámetros de la pila de boletos
-                    let ticketBaseHeight: CGFloat = 520      // altura interna del Ticket
-                    let ticketScale: CGFloat = 0.85          // misma escala que usabas antes
-                    let ticketHeight: CGFloat = ticketBaseHeight * ticketScale
-                    let ticketGap: CGFloat = 78               // separación visible entre boletos apilados
+                    let ticketBaseWidth: CGFloat = 340
+                    let ticketBaseHeight: CGFloat = 400
+                    let baseScale: CGFloat = 0.85
+                    let itemWidth: CGFloat = ticketBaseWidth * baseScale
+                    let itemHeight: CGFloat = ticketBaseHeight * baseScale
+                    let itemSpacing: CGFloat = itemWidth * 0.82 // solapamiento agradable
+                    let sideRotation: Double = 18               // rotación Y para efecto carrusel
+                    let sideScale: CGFloat = 0.86               // escala para los laterales
 
                     if tickets.isEmpty {
                         Text("Sin boletos aún")
@@ -126,40 +130,95 @@ struct WalletView: View {
                             .foregroundStyle(.secondary)
                             .padding(.top, 12)
                     } else {
-                        ZStack(alignment: .top) {
-                            ForEach(tickets.indices, id: \.self) { idx in
-                                let t = tickets[idx]
-                                let isSelected = selectedTicketIndex == idx
-                                let baseOffsetY = CGFloat(idx) * ticketGap
+                        if !isCarouselOpen {
+                            // Vista apilada (stack) con matchedGeometryEffect
+                            ZStack(alignment: .top) {
+                                let gapY: CGFloat = 20
+                                ForEach(tickets.indices, id: \.self) { idx in
+                                    let baseOffsetY = CGFloat(idx) * gapY
+                                    Ticket(qrPayload: tickets[idx].qrPayload, theme: tickets[idx].theme)
+                                        .compositingGroup()
+                                        .matchedGeometryEffect(id: "ticket-\(idx)", in: ticketNamespace)
+                                        .scaleEffect(baseScale)
+                                        .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 6)
+                                        .offset(y: baseOffsetY)
+                                        .zIndex(Double(idx))
+                                }
+                            }
+                            .frame(height: itemHeight + CGFloat(max(0, tickets.count - 1)) * 50)
+                            .padding(.horizontal)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) {
+                                    isCarouselOpen = true
+                                }
+                            }
+                        } else {
+                            // Carrusel con drag y snapping + matchedGeometryEffect
+                            GeometryReader { geo in
+                                let containerWidth = geo.size.width
+                                let centerX = containerWidth / 2
 
-                                Ticket(qrPayload: t.qrPayload, theme: t.theme)
-                                    .scaleEffect(ticketScale)
-                                    .shadow(color: .black.opacity(isSelected ? 0.22 : 0.12),
-                                            radius: isSelected ? 12 : 10,
-                                            x: 0,
-                                            y: isSelected ? 10 : 6)
-                                    .offset(y: baseOffsetY + (isSelected ? -40 : 0))
-                                    .scaleEffect(isSelected ? 0.88 : ticketScale, anchor: .top)
-                                    .opacity(isSelected ? 1.0 : 0.99)
-                                    .zIndex(isSelected ? 100 : Double(idx))
-                                    .onTapGesture {
-                                        // Pequeña animación de levantar el boleto al tocarlo
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                            selectedTicketIndex = idx
+                                ZStack {
+                                    ForEach(tickets.indices, id: \.self) { idx in
+                                        let distance = CGFloat(idx - currentTicketIndex)
+                                        let x = centerX + distance * itemSpacing + dragOffsetX
+                                        let absDist = abs(distance + dragOffsetX / itemSpacing)
+                                        let clamped = min(1, max(0, absDist))
+
+                                        let rotationY = Double((distance + dragOffsetX / itemSpacing)) * -sideRotation
+                                        let scale = baseScale * (1 - (1 - sideScale) * min(1, clamped))
+
+                                        Ticket(qrPayload: tickets[idx].qrPayload, theme: tickets[idx].theme)
+                                            .compositingGroup()
+                                            .matchedGeometryEffect(id: "ticket-\(idx)", in: ticketNamespace)
+                                            .scaleEffect(scale)
+                                            .rotation3DEffect(.degrees(rotationY),
+                                                              axis: (x: 0, y: 1, z: 0),
+                                                              perspective: 0.9)
+                                            .shadow(color: .black.opacity(absDist < 0.01 ? 0.22 : 0.12),
+                                                    radius: absDist < 0.01 ? 14 : 10,
+                                                    x: 0,
+                                                    y: absDist < 0.01 ? 12 : 6)
+                                            .position(x: x, y: itemHeight / 2 + 8)
+                                            .zIndex(Double(tickets.count) - Double(absDist))
+                                            .onTapGesture {
+                                                if idx != currentTicketIndex {
+                                                    withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
+                                                        currentTicketIndex = idx
+                                                        dragOffsetX = 0
+                                                    }
+                                                } else {
+                                                    withAnimation(.spring(response: 0.55, dampingFraction: 0.88)) {
+                                                        isCarouselOpen = false
+                                                        dragOffsetX = 0
+                                                    }
+                                                }
+                                            }
+                                    }
+                                }
+                                .gesture(
+                                    DragGesture(minimumDistance: 5)
+                                        .onChanged { value in
+                                            dragOffsetX = value.translation.width
                                         }
-                                        // Devolverlo después de un breve momento
-                                        Task {
-                                            try? await Task.sleep(nanoseconds: 500_000_000)
+                                        .onEnded { value in
+                                            let proposedShift = value.translation.width / itemSpacing
+                                            let newIndex = currentTicketIndex - Int(round(proposedShift))
+                                            let clampedIndex = max(0, min(tickets.count - 1, newIndex))
                                             withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
-                                                selectedTicketIndex = nil
+                                                currentTicketIndex = clampedIndex
+                                                dragOffsetX = 0
                                             }
                                         }
-                                    }
+                                )
                             }
+                            .frame(height: itemHeight + 40)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical,20)
+                            // Animación cuando cambia el índice actual (snap)
+                            .animation(.spring(response: 0.45, dampingFraction: 0.9), value: currentTicketIndex)
                         }
-                        // Altura total para permitir el scroll de toda la pila de boletos
-                        .frame(height: ticketHeight + CGFloat(max(0, tickets.count - 1)) * ticketGap + 20)
-                        .padding(.horizontal)
                     }
                 }
                 .padding(.bottom, 8)
@@ -172,7 +231,6 @@ struct WalletView: View {
                 Text("WALLET")
                     .font(.custom("FWC2026-NormalBlack", size: 20))
             }
-            // Quitamos el botón de "Abrir lector" de la barra; ahora está en cada tarjeta
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
                     showAddCardSheet = true
@@ -184,7 +242,6 @@ struct WalletView: View {
         }
         // Sheet: “Acerca el iPhone al lector”
         .sheet(isPresented: $showReaderSheet, onDismiss: {
-            // Al cerrar el lector, reestablecemos la pila
             withAnimation(.spring(response: 0.4, dampingFraction: 0.9)) {
                 selectedIndex = nil
             }
@@ -245,9 +302,8 @@ private struct CardItemView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            // Fondo opcional para feedback visual al arrastrar
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.red.opacity(max(0, min(0.25, Double(-dragOffsetX / 200))))) // se intensifica al arrastrar a la izquierda)
+                .fill(Color.red.opacity(max(0, min(0.25, Double(-dragOffsetX / 200)))))
                 .overlay(
                     HStack {
                         Spacer()
@@ -259,7 +315,6 @@ private struct CardItemView: View {
                     }
                 )
 
-            // Tarjeta
             CardPay(
                 backgroundImageName: backgroundImageName,
                 holderName: holderName,
@@ -268,27 +323,22 @@ private struct CardItemView: View {
                 brand: brand
             )
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous)) // toda la tarjeta es "tocable"
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .offset(x: dragOffsetX)
-            // Tap en toda la tarjeta para abrir el lector (y disparar la animación en el padre)
             .simultaneousGesture(
                 TapGesture().onEnded {
                     onOpenReader()
                 }
             )
-            // Gesto de arrastre para eliminar
             .gesture(
                 DragGesture(minimumDistance: 5)
                     .onChanged { value in
-                        // Solo permitir arrastrar hacia la izquierda
                         dragOffsetX = min(0, value.translation.width)
                     }
                     .onEnded { value in
                         if value.translation.width <= triggerThreshold {
-                            // Dispara la solicitud de eliminación
                             onRequestDelete()
                         }
-                        // Regresa la tarjeta a su lugar
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                             dragOffsetX = 0
                         }
@@ -330,7 +380,6 @@ private struct AddCardSheet: View {
     @State private var cardNumber: String = "" // 16 dígitos
     @State private var expiry: String = ""
     @State private var brand: String = "VISA"
-    // Inicializamos vacío; se asignará aleatoriamente en onAppear
     @State private var backgroundImageName: String = ""
 
     private let brands = ["VISA", "Mastercard", "Amex"]
@@ -349,7 +398,6 @@ private struct AddCardSheet: View {
                     TextField("Número de tarjeta (16 dígitos)", text: $cardNumber)
                         .keyboardType(.numberPad)
                         .onChange(of: cardNumber) { _, newValue in
-                            // Mantener solo dígitos y limitar a 16
                             let digits = newValue.filter { $0.isNumber }
                             cardNumber = String(digits.prefix(16))
                         }
@@ -358,7 +406,6 @@ private struct AddCardSheet: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .onChange(of: expiry) { _, newValue in
-                            // Formateo simple MM/AA
                             let digits = newValue.filter { $0.isNumber }.prefix(4)
                             var formatted = ""
                             for (i, ch) in digits.enumerated() {
@@ -405,7 +452,6 @@ private struct AddCardSheet: View {
             }
         }
         .onAppear {
-            // Elegir aleatoriamente un fondo al abrir la hoja
             backgroundImageName = sampleBackgrounds.randomElement() ?? "CardC"
         }
     }

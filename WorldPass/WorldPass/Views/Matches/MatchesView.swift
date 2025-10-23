@@ -291,7 +291,7 @@ struct MatchesView: View {
         .toolbar{
             ToolbarItem(placement: .topBarLeading) {
                 NavigationLink {
-                    pickNDream()
+                    PartidosPorFechaView()
                 } label: {
                     Image(systemName: "dice")
                         .foregroundStyle(.secondary)

@@ -78,7 +78,7 @@ struct GeminiClient {
         #if DEBUG
         if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
             // Solo para previews
-            return "AIzaSyAlEHW76I6ARzb3-qaZOgJMWhZMlcf9_Vo"
+            return "AIzaSyDd575EyaeP40k4O4owwSmGWs_gd13sFe0"
         }
         #endif
         return nil
@@ -127,7 +127,6 @@ struct GeminiClient {
 
 // =============================================================
 
-
 extension Font {
     static func fwcTitle(_ size: CGFloat) -> Font {
         .custom("FWC2026-NormalBlack", size: size)
@@ -143,22 +142,22 @@ private extension Color {
     static let bubbleStroke = Color.white.opacity(0.7)
 }
 
-
-
 struct ChatbotFlowView: View {
     var body: some View {
         NavigationStack {
             ZayuIntroView()
                 .navigationBarHidden(true)
         }
-        // Si quieres tipografía global por defecto:
         .environment(\.font, .custom("FWC2026-NormalRegular", size: 16))
     }
 }
 
-//
 
 struct ZayuIntroView: View {
+    @State private var goToMain = false
+    // Si ZayuIntroView fue presentado como sheet/fullScreenCover y quieres cerrar en vez de navegar:
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -166,26 +165,48 @@ struct ZayuIntroView: View {
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
-                
+
                 VStack {
                     HStack {
-                        // Botón atrás opcional (si llegas aquí desde otro punto)
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.95))
-                            .frame(width: 34, height: 34)
-                            .background(Color.white.opacity(0.18))
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
-                            .opacity(0) // oculto en la intro (solo decorativo como en el mock)
+                        // BOTÓN "BACK" → manda a MainView()
+                        Button {
+                            // Opción A: Navegar a MainView empujándolo en el stack
+                            goToMain = true
+
+                            // Opción B (alternativa): si esta pantalla fue presentada como sheet/fullScreenCover
+                            // y quieres volver a la raíz (MainView ya está debajo), usa:
+                            // dismiss()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.95))
+                                .frame(width: 34, height: 34)
+                                .background(Color.white.opacity(0.18))
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
+                        }
                         Spacer()
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 10)
-                    
+                    .padding(.horizontal)
+
+                    Spacer()
+                    // … tu contenido de intro aquí …
+                    Spacer()
+                }
+
+                // Enlace invisible controlado por estado
+                NavigationLink(destination: MainView(), isActive: $goToMain) {
+                    EmptyView()
+                }
+                .hidden()
+            }
+    
+    
+
+            
+
                     Spacer(minLength: 8)
                     
-                    // Título
                     Text("¡HOLA,\nSOY ZAYU!")
                         .multilineTextAlignment(.center)
                         .font(.fwcTitle(44))
@@ -193,7 +214,6 @@ struct ZayuIntroView: View {
                         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
                         .padding(.bottom, 8)
                     
-                    // Personaje
                     Image("Zayu")
                         .resizable()
                         .scaledToFit()
@@ -202,13 +222,11 @@ struct ZayuIntroView: View {
                     
                     Spacer()
                     
-                    // Subtítulo
                     Text("¿Cómo puedo ayudarte?")
                         .font(.fwcText(18))
                         .foregroundStyle(.white.opacity(0.95))
                         .padding(.bottom, 8)
                     
-                    // Botón Comenzar → navega al chat
                     NavigationLink {
                         IAPrediccionesView()
                             .navigationBarBackButtonHidden(true)
@@ -233,27 +251,59 @@ struct ZayuIntroView: View {
 
 // =============================================================
 
-// =============================================================
-
-struct Message: Identifiable {
-    let id = UUID()
+struct Message: Identifiable, Codable, Equatable {
+    let id: UUID
     let text: String
     let isUser: Bool
     var subtitle: String? = nil
+
+    init(id: UUID = UUID(), text: String, isUser: Bool, subtitle: String? = nil) {
+        self.id = id
+        self.text = text
+        self.isUser = isUser
+        self.subtitle = subtitle
+    }
+}
+
+// Persistencia simple en UserDefaults
+private enum ChatPersistence {
+    static let key = "chat_history_v1"
+
+    static func save(_ messages: [Message]) {
+        do {
+            let data = try JSONEncoder().encode(messages)
+            UserDefaults.standard.set(data, forKey: key)
+        } catch {
+            // opcional: print("Error guardando chat: \(error)")
+        }
+    }
+
+    static func load() -> [Message]? {
+        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
+        do {
+            return try JSONDecoder().decode([Message].self, from: data)
+        } catch {
+            return nil
+        }
+    }
+
+    static func clear() {
+        UserDefaults.standard.removeObject(forKey: key)
+    }
 }
 
 struct IAPrediccionesView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var messages: [Message] = [
-        Message(text: "¡Hola! Soy Zayu 🐆\n¿Cómo puedo ayudarte hoy?", isUser: false)
-    ]
+
+    @State private var messages: [Message] = ChatPersistence.load()
+    ?? [Message(text: "¡Hola! Soy Zayu 🐆\n¿Cómo puedo ayudarte hoy?", isUser: false)]
+
     @State private var currentMessage: String = ""
     @State private var isLoading = false
     @FocusState private var isFieldFocused: Bool
 
     var body: some View {
         ZStack {
-            
             Color(.systemGroupedBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -262,19 +312,20 @@ struct IAPrediccionesView: View {
                 ScrollViewReader { proxy in
                     GeometryReader { geo in
                         ScrollView {
-                            LazyVStack(alignment: .leading, spacing: 14) {
+                            LazyVStack(alignment: .leading, spacing: 12) {
                                 ForEach(messages) { msg in
                                     ChatBubble(message: msg, containerWidth: geo.size.width)
                                         .id(msg.id)
                                 }
                                 if isLoading {
-                                    TypingBubble()
+                                    TypingRow()
                                 }
                             }
                             .padding(.horizontal, 16)
                             .padding(.top, 14)
                             .padding(.bottom, 110)
                         }
+                        .scrollDismissesKeyboard(.interactively) // bajar teclado nativo
                         .onChange(of: messages.count) { _, _ in
                             withAnimation(.easeOut(duration: 0.25)) {
                                 proxy.scrollTo(messages.last?.id, anchor: .bottom)
@@ -290,6 +341,9 @@ struct IAPrediccionesView: View {
                 .overlay(Divider(), alignment: .top)
         }
         .onTapGesture { isFieldFocused = false }
+        .onChange(of: messages) { _, newValue in
+            ChatPersistence.save(newValue) // guarda cada cambio del historial
+        }
     }
 
     // Header
@@ -321,19 +375,9 @@ struct IAPrediccionesView: View {
         .overlay(Divider(), alignment: .bottom)
     }
 
-    // Composer
+    // Composer (sin botón "+")
     private var composer: some View {
         HStack(spacing: 10) {
-            Button(action: {}) {
-                Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.black)
-                    .frame(width: 42, height: 42)
-                    .background(.white)
-                    .clipShape(Circle())
-                    .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
-            }
-
             TextField("Pregunta o busca lo que quieras", text: $currentMessage, axis: .vertical)
                 .font(.fwcText(16))
                 .padding(.horizontal, 14)
@@ -367,6 +411,7 @@ struct IAPrediccionesView: View {
         messages.append(Message(text: userText, isUser: true))
         currentMessage = ""
         isLoading = true
+        ChatPersistence.save(messages) // guarda tras enviar
 
         Task {
             if let response = await fetchGeminiResponse(for: userText) {
@@ -375,86 +420,113 @@ struct IAPrediccionesView: View {
                 messages.append(Message(text: "Error al obtener respuesta de la IA.", isUser: false))
             }
             isLoading = false
+            ChatPersistence.save(messages) // guarda tras recibir
         }
     }
 
+    // ➜ Respuestas breves (máx. 2 oraciones) sin tocar la mecánica de la API.
     private func fetchGeminiResponse(for text: String) async -> String? {
         let client = GeminiClient()
+        let briefInstruction = "Responde de forma breve, clara y directa. Máximo 2 oraciones. "
         do {
-            let reply = try await client.generate(text)
+            let reply = try await client.generate(briefInstruction + text)
+            // Filtro defensivo por si el modelo se alarga: recorte a ~280 caracteres
+            let maxChars = 280
+            if reply.count > maxChars {
+                if let lastSpace = reply.prefix(maxChars).lastIndex(of: " ") {
+                    return String(reply[..<lastSpace]) + "…"
+                }
+                return String(reply.prefix(maxChars)) + "…"
+            }
             return reply
         } catch {
             return "Ocurrió un problema con Gemini: \(error.localizedDescription)"
         }
     }
 
-    
+    // MARK: - UI Components
+
+    // Burbujas con avatar a un lado
     private struct ChatBubble: View {
         let message: Message
         let containerWidth: CGFloat
 
         var body: some View {
-            VStack(alignment: message.isUser ? .trailing : .leading, spacing: 6) {
+            HStack(alignment: .bottom, spacing: 8) {
+                if message.isUser {
+                    Spacer(minLength: 36)
 
-                // Avatar
-                HStack {
-                    if message.isUser {
-                       Spacer()
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 22, height: 22)
-                            .overlay(
-                                Image(systemName: "person.fill")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundStyle(.black)
-                            )
-                            .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
-                    } else {
-                        Image("ZayuChat")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 22, height: 22)
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.white, lineWidth: 1))
-                            .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
-                        Spacer()
-                    }
-                }
-                .padding(.horizontal, 4)
+                    bubble
+                        .background(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .fill(Color.bubbleUser)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .stroke(Color.bubbleStroke, lineWidth: 0.7)
+                        )
+                        .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
 
-                // Burbuja
-                HStack(alignment: .bottom, spacing: 8) {
-                    if message.isUser { Spacer(minLength: 36) }
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 22, height: 22)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.black)
+                        )
+                        .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(message.text)
-                            .font(.fwcText(16))
-                            .foregroundStyle(.black)
-                            .lineSpacing(2)
-                            .frame(maxWidth: containerWidth * 0.75, alignment: .leading)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(message.isUser ? Color.bubbleUser : Color.bubbleBot)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(Color.bubbleStroke, lineWidth: 0.7)
-                    )
-                    .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+                } else {
+                    Image("ZayuChat")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 22, height: 22)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white, lineWidth: 1))
+                        .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
 
-                    if !message.isUser { Spacer(minLength: 36) }
+                    bubble
+                        .background(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .fill(Color.bubbleBot)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .stroke(Color.bubbleStroke, lineWidth: 0.7)
+                        )
+                        .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+
+                    Spacer(minLength: 36)
                 }
             }
         }
+
+        private var bubble: some View {
+            Text(message.text)
+                .font(.fwcText(16))
+                .foregroundStyle(.black)
+                .lineSpacing(2)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .frame(maxWidth: containerWidth * 0.75, alignment: .leading)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
     }
 
-    private struct TypingBubble: View {
+    private struct TypingRow: View {
         @State private var phase: CGFloat = 0
+
         var body: some View {
-            HStack {
+            HStack(spacing: 8) {
+                Image("ZayuChat")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 22, height: 22)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.white, lineWidth: 1))
+                    .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
+
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(Color.bubbleBot)
                     .frame(width: 64, height: 36)
@@ -470,12 +542,12 @@ struct IAPrediccionesView: View {
                                    value: phase)
                     )
                     .onAppear { phase = .pi / 2 }
-                Spacer()
+
+                Spacer(minLength: 36)
             }
         }
     }
 }
-
 
 #Preview {
     ChatbotFlowView()

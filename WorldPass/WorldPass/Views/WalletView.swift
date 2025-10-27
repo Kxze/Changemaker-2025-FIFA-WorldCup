@@ -48,6 +48,9 @@ struct WalletView: View {
     // Boleto seleccionado para levantarlo visualmente
     @State private var selectedTicketIndex: Int? = nil
 
+    // NUEVO: full screen de Expenses
+    @State private var showExpenses: Bool = false
+
     var body: some View {
         ScrollView {
             VStack(spacing: 175) {
@@ -168,11 +171,24 @@ struct WalletView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            // Título original en el centro
             ToolbarItem(placement: .title) {
                 Text("WALLET")
                     .font(.custom("FWC2026-NormalBlack", size: 20))
             }
-            // Quitamos el botón de "Abrir lector" de la barra; ahora está en cada tarjeta
+
+            
+            
+            ToolbarItemGroup(placement: .topBarLeading) {
+                Button {
+                    showExpenses = true
+                } label: {
+                    Image(systemName: "person.3.fill")
+                }
+
+            }
+            
+            // Botón existente de agregar tarjeta (lado superior derecho)
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
                     showAddCardSheet = true
@@ -224,10 +240,15 @@ struct WalletView: View {
         } message: {
             Text("¿Deseas eliminar esta tarjeta?")
         }
+        // NUEVO: Presentación a pantalla completa de ExpensesRootView
+        .fullScreenCover(isPresented: $showExpenses) {
+            ExpensesRootView()
+                .ignoresSafeArea()
+        }
     }
 }
 
-// MARK: - Item de tarjeta con overlay y gesto
+// tarjeta con overlay y gesto
 private struct CardItemView: View {
     let holderName: String
     let cardNumber: String
@@ -304,7 +325,7 @@ private struct CardItemView: View {
     }
 }
 
-// MARK: - Utilidad: Blur nativo para el overlay
+// Blur nativo para el overlay
 private struct VisualEffectBlur: UIViewRepresentable {
     let material: UIBlurEffect.Style
 
@@ -321,7 +342,34 @@ private struct VisualEffectBlur: UIViewRepresentable {
     }
 }
 
-// MARK: - Sheet para agregar tarjeta (16 dígitos)
+//
+private struct GlassIconButton: View {
+    let imageAssetName: String
+    var action: () -> Void
+    var size: CGFloat = 18
+    var body: some View {
+        Button(action: action) {
+            Image(imageAssetName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: size, height: size)
+                .padding(10)
+                .background(
+                    VisualEffectBlur(material: .systemUltraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Dividir gastos")
+    }
+}
+
+// Sheet para agregar tarjeta (16 dígitos)
 private struct AddCardSheet: View {
     var onAdd: ((holderName: String, cardNumber: String, expiry: String, brand: String, backgroundImageName: String)) -> Void
     var onCancel: () -> Void
@@ -417,7 +465,8 @@ private struct AddCardSheet: View {
     }
 }
 
-// MARK: - Mock de “Hold Near Reader”
+
+
 private struct HoldNearReaderSheet: View {
     var onCancel: () -> Void
 

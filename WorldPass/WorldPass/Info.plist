@@ -2,10 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>GEMINI_API_KEY</key>
-	<string>AIzaSyAlEHW76I6ARzb3-qaZOgJMWhZMlcf9_Vo</string>
 	<key>API_FOOTBALL_KEY</key>
 	<string>4aea74ce5a44af9b50ad9038b383fb32</string>
+	<key>GEMINI_API_KEY</key>
+	<string>AIzaSyDd575EyaeP40k4O4owwSmGWs_gd13sFe0</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>FWC2026-NormalRegular.ttf</string>

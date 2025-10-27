@@ -1,26 +1,21 @@
-//  PartidosPorFechaView.swift
+//  pickNDream.swift
 //  WorldPass
 //
-//  Mundial 2026 – Quinielas por día (calendario embebido, DatePicker inline, sin flechas).
 //
-import SwiftUI
-import Foundation
-import Combine
 
-// MARK: - CONFIG
+import SwiftUI
+import Combine
+import UIKit
+
+
+
 enum APISports {
     static let defaultTZ = "America/Mexico_City"
-    static let worldCupLeagueId = 1
-    static let worldCupSeason   = 2026
-    // API real (opcional, mantener comentada)
-    // static let base = URL(string:"https://v3.football.api-sports.io")!
-    // static let key: String = {
-    //     if let k = Bundle.main.object(forInfoDictionaryKey: "API_SPORTS_KEY") as? String, !k.isEmpty { return k }
-    //     return "4aea74ce5a44af9b50ad9038b383fb32"
-    // }()
+    static let worldCupSeason = 2026
 }
 
-// MARK: - DOMAIN/UI
+
+
 enum MatchStatus { case notStarted, live, finished }
 
 struct UIMatch: Identifiable {
@@ -40,7 +35,9 @@ struct UIMatch: Identifiable {
 
 enum PredictionKind: String, Codable, CaseIterable { case signHome, signDraw, signAway }
 
-// MARK: - ESTILOS
+
+
+
 extension Font {
     static func fwcBlack(_ size: CGFloat) -> Font { .custom("FWC2026-NormalBlack", size: size) }
     static func fwcRegular(_ size: CGFloat) -> Font { .custom("FWC2026-NormalRegular", size: size) }
@@ -49,50 +46,55 @@ extension Color {
     static let glassStroke = Color.white.opacity(0.28)
     static let pillGreen   = Color.green.opacity(0.90)
     static let pillRed     = Color.red.opacity(0.90)
-    static let captionGray = Color.gray.opacity(0.9)
 }
 
-// MARK: - GLASS
-struct GlassCardBackground: ViewModifier {
+
+
+struct FWCGlassCardBackground: ViewModifier {
     var corner: CGFloat = 18
     func body(content: Content) -> some View {
         content
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: corner, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).stroke(Color.glassStroke, lineWidth: 1))
-            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+            .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous)
+                .stroke(Color.glassStroke, lineWidth: 1))
+            .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
     }
 }
-extension View { func glassCard(_ c: CGFloat = 18) -> some View { modifier(GlassCardBackground(corner: c)) } }
+extension View { func fwcGlassCard(_ c: CGFloat = 18) -> some View { modifier(FWCGlassCardBackground(corner: c)) } }
 
-// MARK: - FLAGS (ajusta a tus assets locales)
-let flagByCode: [String: String] = [
-    "MEX":"mex","EGY":"egipto","DEN":"DK","NZL":"NuevaZel",
-    "USA":"USA","GHA":"Ghana","JPN":"japon","SRB":"Serbia",
-    "CAN":"Canada","GER":"germany","MAR":"Mar","KOR":"corea",
-    "ARG":"arg","NGA":"Nig","AUS":"aus","POL":"Pol",
-    "FRA":"France","URU":"uruguay","IRN":"iran","CRC":"CostaR",
-    "BRA":"brasil","CRO":"Cro","CMR":"camerun","KSA":"arabia",
-    "ENG":"Ing","COL":"col","TUR":"Turquia","SUI":"Suiza",
-    "ESP":"Spain","BEL":"Belgium","CHI":"chile","SWE":"Suecia",
-    "NED":"Ned","CZE":"Cz","RSA":"Sud","ITA":"italia","ECU":"ecu",
-    "SVK":"Eslovaquia","TUN":"Tunez","POR":"Por","CIV":"CostaDeMarfil",
-    "UKR":"Ucrania","CHN":"China","PRK":"corea","HUN":"Hungria",
-    "SVN":"Eslovenia","QAT":"Catar"
+
+private let allowedTeamCodes: Set<String> = Set(equiposDetails.map { $0.name })
+private let flagByEquipoDetails: [String: String] =
+    Dictionary(uniqueKeysWithValues: equiposDetails.map { ($0.name, $0.flag) })
+
+//
+
+
+
+private let fallbackFlagByCode: [String: String] = [
+    "MEX":"mex","EGY":"egipto","DEN":"DK","NZL":"NuevaZel","USA":"USA","GHA":"Ghana",
+    "JPN":"japon","SRB":"Serbia","CAN":"Canada","GER":"germany","MAR":"Mar","KOR":"corea",
+    "ARG":"arg","NGA":"Nig","AUS":"aus","POL":"Pol","FRA":"France","URU":"uruguay",
+    "IRN":"iran","CRC":"CostaR","BRA":"brasil","CRO":"Cro","CMR":"camerun","KSA":"arabia",
+    "ENG":"Ing","COL":"col","TUR":"Turquia","SUI":"Suiza","ESP":"Spain","BEL":"Belgium",
+    "CHI":"chile","SWE":"Suecia","NED":"Ned","CZE":"Cz","RSA":"Sud","ITA":"italia",
+    "ECU":"ecu","SVK":"Eslovaquia","TUN":"Tunez","POR":"Por","CIV":"CostaDeMarfil",
+    "UKR":"Ucrania","CHN":"China","PRK":"corea","HUN":"Hungria","SVN":"Eslovenia","QAT":"Catar"
 ]
+private func flagAsset(for code: String) -> String {
+    if let asset = flagByEquipoDetails[code] { return asset }
+    return fallbackFlagByCode[code] ?? "placeholderFlag"
+}
 
-// MARK: - RANGO / FECHA INICIAL
-private let wcStart: Date = {
-    var c = DateComponents(); c.year=2026; c.month=6; c.day=11
-    return Calendar.current.date(from: c) ?? Date()
-}()
-private let wcEnd: Date = {
-    var c = DateComponents(); c.year=2026; c.month=7; c.day=19
-    return Calendar.current.date(from: c) ?? wcStart
-}()
+//
+private let wcStart = Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 11))!
+private let wcEnd   = Calendar.current.date(from: DateComponents(year: 2026, month: 7, day: 19))!
+private let june11  = Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 11))!
+private let june12  = Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 12))!
 
-// MARK: - CALENDARIO EMBEBIDO (TU LISTA)
-// Columnas: date(YYYY-MM-DD),phase,homeCode,homeName,awayCode,awayName,status(NS|LIVE|FT),homeScore,awayScore
-// Nota: más abajo forzamos que TODAS las fechas != 2026-06-11 se comporten como NS (apuestas habilitadas).
+// CALENDARIO
+
+
 private let CALENDAR_CSV: String = """
 2026-06-11,Grupos A, MEX,México, EGY,Egipto, NS,,
 2026-06-11,Grupos G, ENG,Inglaterra, COL,Colombia, LIVE,1,0
@@ -194,12 +196,14 @@ private let CALENDAR_CSV: String = """
 2026-07-19,Final, ARG,Argentina, USA,Estados Unidos, FT,2,0
 """
 
-// MARK: - PARSER / AJUSTE DE ESTADOS PARA PERMITIR APUESTAS
-private func parseDate(_ ymd: String) -> Date {
+
+
+
+private func parseDate(_ s: String) -> Date {
     let f = DateFormatter()
     f.dateFormat = "yyyy-MM-dd"
     f.timeZone = TimeZone(identifier: APISports.defaultTZ)
-    return f.date(from: ymd) ?? wcStart
+    return f.date(from: s) ?? wcStart
 }
 private func statusFrom(_ s: String) -> MatchStatus {
     switch s.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() {
@@ -208,11 +212,6 @@ private func statusFrom(_ s: String) -> MatchStatus {
     default: return .notStarted
     }
 }
-private func flagAsset(for code: String) -> String {
-    flagByCode[code] ?? "placeholderFlag"
-}
-
-private let june11 = "2026-06-11"
 
 private func loadCalendar() -> [UIMatch] {
     var out: [UIMatch] = []
@@ -233,9 +232,13 @@ private func loadCalendar() -> [UIMatch] {
         var hScore   = Int(parts[7])
         var aScore   = Int(parts[8])
 
-        // Regla: salvo el 11/jun, todos los partidos se consideran "no iniciados"
-        // para que se pueda apostar en cualquier día del torneo.
-        if dateStr != june11 {
+        
+        guard allowedTeamCodes.contains(hCode), allowedTeamCodes.contains(aCode) else {
+            continue
+        }
+
+        
+        if !Calendar.current.isDate(date, inSameDayAs: june11) {
             status = .notStarted
             hScore = nil
             aScore = nil
@@ -261,56 +264,162 @@ private func loadCalendar() -> [UIMatch] {
     return out.sorted { $0.date < $1.date }
 }
 
-// MARK: - HEADER (sin flechas)
-struct QuinielaHeader: View {
-    let total: Int; let streak: Int
-    let dateText: String
-    let onTogglePicker: () -> Void
-
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Spacer()
-                HStack(spacing: 6) { Image(systemName: "trophy.fill"); Text("26").font(.fwcBlack(20)) }
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 6)
-            .padding(.bottom, 2)
-
-            HStack(spacing: 12) {
-                StatPill(title: "Puntaje", value: "\(total)")
-                StatPill(title: "Racha", value: "\(streak)")
-                Spacer()
-                Button(action: onTogglePicker) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "calendar")
-                        Text(dateText)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .glassCard(20)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 16)
-        }
+//
+private func logEquiposFaltantes() {
+    let lines = CALENDAR_CSV.split(whereSeparator: \.isNewline).map(String.init)
+    var usados = Set<String>()
+    for line in lines {
+        let p = line.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+        guard p.count >= 6 else { continue }
+        usados.insert(p[2]); usados.insert(p[4])
     }
-}
-struct StatPill: View {
-    let title: String; let value: String
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(title).font(.fwcRegular(14)).foregroundColor(.secondary)
-            Text(value).font(.fwcBlack(18))
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .glassCard(20)
+    let faltan = usados.subtracting(allowedTeamCodes).sorted()
+    if !faltan.isEmpty {
+        print("⚠️ Equipos sin asset:", faltan.joined(separator: ", "))
+    } else {
+        print("✅ Todos los equipos del CSV tienen asset.")
     }
 }
 
-// MARK: - IMAGE HELPER
+
+//
+struct ConfettiView: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        let emitter = CAEmitterLayer()
+        emitter.emitterPosition = CGPoint(x: UIScreen.main.bounds.width/2, y: -10)
+        emitter.emitterShape = .line
+        emitter.emitterSize = CGSize(width: UIScreen.main.bounds.width, height: 1)
+
+        let shapes: [UIImage] = [
+            UIImage(systemName: "square.fill")!,
+            UIImage(systemName: "circle.fill")!,
+            UIImage(systemName: "triangle.fill")!
+        ]
+        let colors: [UIColor] = [.systemRed, .systemBlue, .systemGreen, .systemOrange, .systemPink, .systemPurple, .systemTeal, .systemYellow]
+
+        emitter.emitterCells = colors.flatMap { color in
+            shapes.map { shape in
+                let c = CAEmitterCell()
+                c.contents = shape.withTintColor(color, renderingMode: .alwaysOriginal).cgImage
+                c.birthRate = 6
+                c.lifetime = 4
+                c.velocity = 160
+                c.velocityRange = 80
+                c.emissionLongitude = .pi
+                c.emissionRange = .pi/4
+                c.spin = 3.5
+                c.spinRange = 3
+                c.scale = 0.18
+                c.scaleRange = 0.1
+                return c
+            }
+        }
+        view.layer.addSublayer(emitter)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) { emitter.birthRate = 0 }
+        return view
+    }
+    func updateUIView(_ uiView: UIView, context: Context) {}
+}
+
+
+
+// VIEWMODEL
+@MainActor final class HoyVM: ObservableObject {
+    @Published var allMatches: [UIMatch] = []
+    @Published var matchesToday: [UIMatch] = []
+    @Published var isLoading = false
+    @Published var totalPoints: Int = 50
+    @Published var streak: Int = 1
+    @Published var selectedDate: Date = wcStart
+    @Published var showConfetti: Bool = false
+
+    private var hasScheduledTestReward = false
+
+    // Persistencia de selecciones
+    @AppStorage("predictions_wc_2026") private var storedPredictionsData: Data = Data()
+    @Published var selections: [String: PredictionKind] = [:] {
+        didSet { persistSelections() }
+    }
+
+    init() {
+        loadAll()
+        restoreSelections()
+        filterForSelectedDate()
+        logEquiposFaltantes()
+    }
+
+    func loadAll() {
+        isLoading = true
+        defer { isLoading = false }
+        allMatches = loadCalendar()
+    }
+
+    func filterForSelectedDate() {
+        matchesToday = allMatches.filter { Calendar.current.isDate($0.date, inSameDayAs: selectedDate) }
+    }
+
+    func selection(for match: UIMatch) -> PredictionKind? { selections[match.id] }
+    func isLocked(_ match: UIMatch) -> Bool { match.status != .notStarted }
+
+    func setSelection(for match: UIMatch, kind: PredictionKind) {
+        guard !isLocked(match) else { return }
+        selections[match.id] = kind
+        triggerTestRewardIfNeeded(match: match, pick: kind)
+    }
+
+    func points(for match: UIMatch, selected: PredictionKind?) -> (value: Int, won: Bool, finished: Bool) {
+        guard match.status == .finished, let h = match.homeScore, let a = match.awayScore else {
+            return (0, false, false)
+        }
+        guard let pick = selected else { return (0, false, true) }
+        switch pick {
+        case .signDraw: return (h == a ? 20 : 0, h == a, true)
+        case .signHome: return (h > a ? 20 : 0, h > a, true)
+        case .signAway: return (a > h ? 20 : 0, a > h, true)
+        }
+    }
+
+    
+    
+    
+    private func triggerTestRewardIfNeeded(match: UIMatch, pick: PredictionKind) {
+        guard pick == .signDraw else { return }
+        guard Calendar.current.isDate(match.date, inSameDayAs: june12) else { return }
+        guard !hasScheduledTestReward else { return }
+        hasScheduledTestReward = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+            guard let self = self else { return }
+            self.totalPoints += 50
+            self.streak += 1
+            withAnimation { self.showConfetti = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+                withAnimation { self.showConfetti = false }
+            }
+        }
+    }
+
+  
+    private func persistSelections() {
+        do {
+            let data = try JSONEncoder().encode(selections.mapValues { $0.rawValue })
+            storedPredictionsData = data
+        } catch { print("persist error", error) }
+    }
+    private func restoreSelections() {
+        guard !storedPredictionsData.isEmpty else { return }
+        do {
+            let decoded = try JSONDecoder().decode([String:String].self, from: storedPredictionsData)
+            selections = decoded.compactMapValues { PredictionKind(rawValue: $0) }
+        } catch { print("restore error", error) }
+    }
+}
+
+
+
+
 @ViewBuilder
 private func FlagView(flagAsset: String, size: CGSize = .init(width: 36, height: 24)) -> some View {
     if UIImage(named: flagAsset) != nil {
@@ -324,67 +433,26 @@ private func FlagView(flagAsset: String, size: CGSize = .init(width: 36, height:
     }
 }
 
-// MARK: - ROWS
-struct MatchRow: View {
-    let match: UIMatch
-    let selected: PredictionKind?
-    let onSelect: (PredictionKind) -> Void
-    let pointsInfo: (value: Int, won: Bool, finished: Bool)
+struct SelectablePill: View {
+    let text: String
+    let isSelected: Bool
+    var isDisabled: Bool = false
+    let action: () -> Void
 
     var body: some View {
-        let locked = match.status != .notStarted
-        let showChip = (selected != nil) && pointsInfo.finished
-        let chipText = showChip ? (pointsInfo.won ? "\(pointsInfo.value) pts" : "0 pts") : nil
-        let chipWin  = showChip ? pointsInfo.won : nil
-
-        VStack(spacing: 12) {
-            HStack {
-                Text(match.phase.uppercased())
-                    .font(.fwcRegular(11))
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-
-            HStack(spacing: 14) {
-                TeamPill(code: match.homeCode,
-                         flagAsset: match.homeFlagAsset,
-                         alignLeft: true,
-                         chipText: chipText,
-                         chipWin: chipWin,
-                         name: match.homeName)
-
-                Text("VS").font(.fwcBlack(12))
-                    .frame(width: 28, height: 28)
-                    .glassCard(14)
-
-                TeamPill(code: match.awayCode,
-                         flagAsset: match.awayFlagAsset,
-                         alignLeft: false,
-                         chipText: nil,
-                         chipWin: nil,
-                         name: match.awayName)
-            }
-            .padding(12)
-            .glassCard(22)
-
-            PredictionPicker(selected: selected, onSelect: onSelect, isLocked: locked)
-
-            Text(match.status == .finished ? "FINALIZADO" :
-                 (match.status == .live ? "EN JUEGO" : "AÚN NO COMIENZA EL JUEGO"))
+        Button(action: action) {
+            Text(text)
                 .font(.fwcBlack(12))
-                .foregroundColor(.secondary)
+                .foregroundColor(.black)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(.black.opacity(isSelected ? 0.9 : 0.25), lineWidth: isSelected ? 2 : 1))
         }
-        .overlay(alignment: .topTrailing) {
-            if locked {
-                Label(match.status == .finished ? "No disponible" : "Cierra al inicio",
-                      systemImage: match.status == .finished ? "lock.fill" : "lock")
-                    .font(.fwcRegular(11))
-                    .padding(8)
-                    .glassCard(14)
-                    .padding(.trailing, 8)
-            }
-        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.5 : 1)
     }
 }
 
@@ -400,29 +468,6 @@ struct PredictionPicker: View {
             SelectablePill(text: "VISITA", isSelected: selected == .signAway,  isDisabled: isLocked) { onSelect(.signAway) }
         }
         .padding(.horizontal, 2)
-        .opacity(isLocked ? 0.5 : 1)
-    }
-}
-
-struct SelectablePill: View {
-    let text: String
-    let isSelected: Bool
-    var isDisabled: Bool = false
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(text)
-                .font(.fwcBlack(12))
-                .foregroundColor(isSelected ? .white : .primary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(isSelected ? Color.black.opacity(0.85) : Color(.secondarySystemBackground))
-                .clipShape(Capsule())
-                .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: isSelected ? 0 : 1))
-        }
-        .buttonStyle(.plain)
-        .disabled(isDisabled)
     }
 }
 
@@ -430,16 +475,16 @@ struct TeamPill: View {
     let code: String
     let flagAsset: String
     let alignLeft: Bool
+    var name: String? = nil
     let chipText: String?
     let chipWin: Bool?
-    var name: String? = nil
 
     var body: some View {
         HStack(spacing: 10) {
             if alignLeft {
                 FlagView(flagAsset: flagAsset)
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(code == "UNK" ? "—" : code).font(.fwcBlack(14))
+                    Text(code == "UNK" ? "—" : code).font(.fwcBlack(14)).foregroundColor(.black)
                     if let name { Text(name).font(.fwcRegular(11)).foregroundColor(.secondary) }
                 }
                 Spacer(minLength: 0)
@@ -448,7 +493,7 @@ struct TeamPill: View {
                 Image(systemName: "checkmark.circle").font(.caption).opacity(0.8)
                 Spacer(minLength: 0)
                 VStack(alignment: .trailing, spacing: 0) {
-                    Text(code == "UNK" ? "—" : code).font(.fwcBlack(14))
+                    Text(code == "UNK" ? "—" : code).font(.fwcBlack(14)).foregroundColor(.black)
                     if let name { Text(name).font(.fwcRegular(11)).foregroundColor(.secondary) }
                 }
                 FlagView(flagAsset: flagAsset)
@@ -456,7 +501,7 @@ struct TeamPill: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .glassCard(22)
+        .fwcGlassCard(22)
         .overlay(alignment: .center) {
             if let chipText, let chipWin {
                 Text(chipText)
@@ -471,151 +516,234 @@ struct TeamPill: View {
     }
 }
 
-// MARK: - VIEW MODEL
-@MainActor final class HoyVM: ObservableObject {
-    @Published var allMatches: [UIMatch] = []
-    @Published var matchesToday: [UIMatch] = []
-    @Published var isLoading = false
-    @Published var totalPoints: Int = 50
-    @Published var streak: Int = 1
+struct MatchRow: View {
+    let match: UIMatch
+    let selected: PredictionKind?
+    let onSelect: (PredictionKind) -> Void
+    let pointsInfo: (value: Int, won: Bool, finished: Bool)
 
-    @Published var selectedDate: Date = wcStart
+    var body: some View {
+        let locked = match.status != .notStarted
+        let showChip = (selected != nil) && pointsInfo.finished
+        let chipText = showChip ? (pointsInfo.won ? "\(pointsInfo.value) pts" : "0 pts") : nil
+        let chipWin  = showChip ? pointsInfo.won : nil
 
-    // Persistencia de selecciones
-    @AppStorage("predictions_wc_2026") private var storedPredictionsData: Data = Data()
-    @Published var selections: [String: PredictionKind] = [:] {
-        didSet { self.persistSelections() }
-    }
+        VStack(spacing: 12) {
+            HStack {
+                Text(match.phase.uppercased())
+                    .font(.fwcRegular(11)).foregroundColor(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
 
-    init() {
-        self.loadAll()
-        self.restoreSelections()
-        self.filterForSelectedDate()
-    }
+            HStack(spacing: 14) {
+                TeamPill(code: match.homeCode,
+                         flagAsset: match.homeFlagAsset,
+                         alignLeft: true,
+                         name: match.homeName,
+                         chipText: chipText,
+                         chipWin: chipWin)
 
-    func loadAll() {
-        isLoading = true
-        defer { isLoading = false }
-        self.allMatches = loadCalendar()
-    }
+                Text("VS").font(.fwcBlack(12)).foregroundColor(.black)
+                    .frame(width: 28, height: 28)
+                    .fwcGlassCard(14)
 
-    func filterForSelectedDate() {
-        let cal = Calendar.current
-        self.matchesToday = allMatches.filter { cal.isDate($0.date, inSameDayAs: selectedDate) }
-    }
+                TeamPill(code: match.awayCode,
+                         flagAsset: match.awayFlagAsset,
+                         alignLeft: false,
+                         name: match.awayName,
+                         chipText: nil,
+                         chipWin: nil)
+            }
+            .padding(12)
+            .fwcGlassCard(22)
 
-    func selection(for match: UIMatch) -> PredictionKind? { selections[match.id] }
-    func isLocked(_ match: UIMatch) -> Bool { match.status != .notStarted }
+            PredictionPicker(selected: selected, onSelect: onSelect, isLocked: locked)
 
-    func setSelection(for match: UIMatch, kind: PredictionKind) {
-        guard !isLocked(match) else { return }
-        selections[match.id] = kind
-    }
-
-    // Puntos: solo si terminó (20 acierto, 0 fallo). Si no apostaste, no hay chip.
-    func points(for match: UIMatch, selected: PredictionKind?) -> (value: Int, won: Bool, finished: Bool) {
-        guard match.status == .finished, let h = match.homeScore, let a = match.awayScore else {
-            return (0, false, false)
+            Text(match.status == .finished ? "FINALIZADO" :
+                 (match.status == .live ? "EN JUEGO" : "AÚN NO COMIENZA EL JUEGO"))
+                .font(.fwcBlack(12))
+                .foregroundColor(.secondary)
         }
-        guard let pick = selected else { return (0, false, true) }
-        switch pick {
-        case .signDraw: return (h == a ? 20 : 0, h == a, true)
-        case .signHome: return (h > a ? 20 : 0, h > a, true)
-        case .signAway: return (a > h ? 20 : 0, a > h, true)
-        }
-    }
-
-    // Persistencia
-    private func persistSelections() {
-        do {
-            let data = try JSONEncoder().encode(selections.mapValues { $0.rawValue })
-            storedPredictionsData = data
-        } catch {
-            print("persist error", error)
-        }
-    }
-
-    private func restoreSelections() {
-        guard !storedPredictionsData.isEmpty else { return }
-        do {
-            let decoded = try JSONDecoder().decode([String:String].self, from: storedPredictionsData)
-            selections = decoded.compactMapValues { PredictionKind(rawValue: $0) }
-        } catch {
-            print("restore error", error)
+        .overlay(alignment: .topTrailing) {
+            if locked {
+                Label(match.status == .finished ? "No disponible" : "Cierra al inicio",
+                      systemImage: match.status == .finished ? "lock.fill" : "lock")
+                    .font(.fwcRegular(11))
+                    .padding(8)
+                    .fwcGlassCard(14)
+                    .padding(.trailing, 8)
+            }
         }
     }
 }
 
-// MARK: - VIEW PRINCIPAL
-struct PartidosPorFechaView: View {
-    @StateObject var vm = HoyVM()
-    @State private var showInlinePicker = true // visible por defecto
 
-    private var dateFormatter: DateFormatter {
-        let df = DateFormatter(); df.dateStyle = .medium; df.timeStyle = .none
-        df.locale = Locale(identifier: "es_MX"); df.timeZone = TimeZone(identifier: APISports.defaultTZ)
-        return df
-    }
+
+
+struct StatPill: View {
+    let title: String
+    let value: String
 
     var body: some View {
-        ZStack {
-            Color(.systemGroupedBackground).ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 12) {
-                QuinielaHeader(
-                    total: vm.totalPoints,
-                    streak: vm.streak,
-                    dateText: dateFormatter.string(from: vm.selectedDate),
-                    onTogglePicker: { withAnimation(.spring()) { showInlinePicker.toggle() } }
-                )
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.fwcRegular(14))
+                .foregroundColor(.secondary)
 
-                if showInlinePicker {
-                    HStack {
-                        DatePicker(
-                            "Selecciona",
-                            selection: $vm.selectedDate,
-                            in: wcStart...wcEnd,
-                            displayedComponents: [.date]
-                        )
-                        .labelsHidden()
-                        .onChange(of: vm.selectedDate) { _ in vm.filterForSelectedDate() }
-                        Spacer(minLength: 0)
+            Text(value)
+                .font(.fwcBlack(18))
+                .foregroundColor(.black)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .fwcGlassCard(20)
+    }
+}
+
+
+
+// HEADER
+struct QuinielaHeader: View {
+    let total: Int; let streak: Int
+    let onCalendarTap: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            StatPill(title: "Puntaje", value: "\(total)")
+            StatPill(title: "Racha", value: "\(streak)")
+            Spacer(minLength: 0)
+            Button(action: onCalendarTap) {
+                Image(systemName: "calendar")
+                    .resizable().scaledToFit()
+                    .frame(width: 22, height: 22)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.glassStroke, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Calendario")
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
+    }
+}
+
+/* RANKING
+struct RankingView: View {
+    var body: some View {
+        Text("Ranking")
+            .font(.fwcBlack(22))
+            .navigationTitle("Ranking")
+    }
+}
+*/
+
+
+// MAIN VIEW
+struct PartidosPorFechaView: View {
+    @StateObject var vm = HoyVM()
+    @State private var showCalendar = false
+    @State private var goRanking = false
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color(.systemGroupedBackground).ignoresSafeArea()
+
+                VStack(alignment: .leading, spacing: 12) {
+                   
+                    QuinielaHeader(
+                        total: vm.totalPoints,
+                        streak: vm.streak,
+                        onCalendarTap: { withAnimation(.spring()) { showCalendar = true } }
+                    )
+                    .popover(isPresented: $showCalendar, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            DatePicker(
+                                "",
+                                selection: $vm.selectedDate,
+                                in: wcStart...wcEnd,
+                                displayedComponents: [.date]
+                            )
+                            .datePickerStyle(.graphical)
+                            .labelsHidden()
+                            .environment(\.locale, Locale(identifier: "es_MX"))
+                            .onChange(of: vm.selectedDate) { _ in vm.filterForSelectedDate() }
+
+                            HStack {
+                                Spacer()
+                                Button("Cerrar") { showCalendar = false }
+                                    .buttonStyle(.borderedProminent)
+                            }
+                        }
+                        .padding()
+                        .frame(minWidth: 360, idealWidth: 420, maxWidth: 480,
+                               minHeight: 280, idealHeight: 320, maxHeight: 380)
+                        .presentationCompactAdaptation(.popover)
                     }
-                    .padding(.horizontal, 16)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+
+                    Text("PARTIDOS")
+                        .font(.fwcBlack(22))
+                        .padding(.horizontal, 16)
+                        .padding(.top, 2)
+
+                    ScrollView {
+                        LazyVStack(spacing: 18) {
+                            if vm.isLoading {
+                                ProgressView().padding(.top, 40)
+                            } else if vm.matchesToday.isEmpty {
+                                Text("No hay partidos (con banderas disponibles) para esta fecha.")
+                                    .font(.fwcRegular(14))
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, 40)
+                            } else {
+                                ForEach(vm.matchesToday) { m in
+                                    let sel = vm.selection(for: m)
+                                    MatchRow(
+                                        match: m,
+                                        selected: sel,
+                                        onSelect: { vm.setSelection(for: m, kind: $0) },
+                                        pointsInfo: vm.points(for: m, selected: sel)
+                                    )
+                                    .padding(.horizontal, 16)
+                                }
+                            }
+                        }
+                    }
                 }
 
-                Text("PARTIDOS")
-                    .font(.fwcBlack(22))
-                    .padding(.horizontal, 16)
-                    .padding(.top, 2)
-
-                ScrollView {
-                    LazyVStack(spacing: 18) {
-                        if vm.isLoading {
-                            ProgressView().padding(.top, 40)
-                        } else if vm.matchesToday.isEmpty {
-                            Text("No hay partidos para esta fecha.")
-                                .font(.fwcRegular(14))
-                                .foregroundColor(.secondary)
-                                .padding(.top, 40)
-                        } else {
-                            ForEach(vm.matchesToday) { m in
-                                let sel = vm.selection(for: m)
-                                MatchRow(
-                                    match: m,
-                                    selected: sel,
-                                    onSelect: { vm.setSelection(for: m, kind: $0) },
-                                    pointsInfo: vm.points(for: m, selected: sel)
-                                )
-                                .padding(.horizontal, 16)
-                            }
-                            Text(" Apuestas habilitadas en partidos que aún no cominezan.")
-                                .font(.fwcRegular(13))
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                                .padding(.vertical, 24)
-                                .padding(.horizontal, 24)
+                if vm.showConfetti {
+                    ConfettiView()
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                }
+            }
+            
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Image("logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 24)
+                        .accessibilityHidden(true)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink(destination: RankingView(), isActive: $goRanking) {
+                        Button {
+                            goRanking = true
+                        } label: {
+                            Image(systemName: "trophy.fill")
+                                .font(.title3)
+                                .foregroundColor(.primary)
+                                .padding(8)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.glassStroke, lineWidth: 1))
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Ranking")
                     }
                 }
             }
@@ -624,8 +752,6 @@ struct PartidosPorFechaView: View {
     }
 }
 
-struct PartidosPorFechaView_Previews: PreviewProvider {
-    static var previews: some View {
-        PartidosPorFechaView().preferredColorScheme(.light)
-    }
+#Preview {
+    PartidosPorFechaView()
 }

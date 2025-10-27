@@ -22,7 +22,7 @@ struct Grupo: Identifiable, Hashable {
     let partidos: [Partido]   // 6 partidos (todas las combinaciones únicas)
 }
 
-// MARK: - Generación de grupos y partidos
+// Generación de grupos y partidos
 
 /// Genera todas las combinaciones únicas (i < j) de enfrentamientos entre los equipos.
 /// No hay auto-enfrentamientos ni repeticiones.
@@ -80,7 +80,7 @@ func generarGruposDesdeEquipos(_ equipos: [Equipos], mezclar: Bool = false) -> [
     return grupos
 }
 
-// MARK: - Fuente principal usando equiposDetails global (Formato Mundial 2026)
+// Fuente principal usando equiposDetails global (Formato Mundial 2026)
 
 /// Genera los 12 grupos (A...L) con 4 equipos cada uno a partir de `equiposDetails`,
 /// con sus 6 partidos por grupo (round-robin), SIN barajar para que sean fijos.

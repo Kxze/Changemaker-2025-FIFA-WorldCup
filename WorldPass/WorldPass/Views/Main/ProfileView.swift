@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-// MARK: - Glass Effect
 struct GlassBackground: ViewModifier {
     var corner: CGFloat = 14
     func body(content: Content) -> some View {
@@ -41,18 +40,18 @@ extension View {
     }
 }
 
-// MARK: - ProfileView
+// ProfileView
 struct ProfileView: View {
-    // Persistimos el nombre del asset elegido como avatar
+   
     @AppStorage("profileAvatarName") private var profileAvatarName: String?
     @State private var showAvatarSheet = false
 
-    // Ajusta aquí los nombres EXACTOS de tus imágenes en Assets.xcassets
+   
     private let appAvatars: [String] = [
         "perfil_zayu", "perfil_maple", "perfil_clutch"
     ]
 
-    // Imagen a mostrar (usa asset si hay selección; si no, placeholder del sistema)
+   
     private var profileImage: Image {
         if let name = profileAvatarName, !name.isEmpty {
             return Image(name)
@@ -61,7 +60,7 @@ struct ProfileView: View {
         }
     }
 
-    // ===== Stacked Cards: estado y datos =====
+   
     @State private var selectedStackCardID: UUID? = nil
     @State private var goToWallet: Bool = false
 
@@ -91,7 +90,7 @@ struct ProfileView: View {
             VStack(spacing: 0) {
                 headerView
                 statsView
-                stackedCardsSection   // << Reemplaza las MatchCard por esta sección
+                stackedCardsSection   //
             }
         }
         .background(.clear) // fondo transparente
@@ -101,16 +100,16 @@ struct ProfileView: View {
                 availableNames: appAvatars
             )
         }
-        // Modern programmatic navigation target (iOS 17+)
+        
         .navigationDestination(isPresented: $goToWallet) {
             WalletView()
         }
     }
 
-    // MARK: Header
+    // Header
     private var headerView: some View {
         VStack(spacing: 16) {
-            // Toca la foto para abrir el selector interno de avatares de la app
+          
             Button {
                 showAvatarSheet = true
             } label: {
@@ -130,7 +129,7 @@ struct ProfileView: View {
                             Circle()
                                 .fill(Color.black.opacity(0.30)) // fondo oscuro sutil
                                 .frame(width: 32, height: 32)
-                            Image(systemName: "pencil")         // solo el lápiz
+                            Image(systemName: "pencil")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.95))
                         }
@@ -139,7 +138,7 @@ struct ProfileView: View {
             }
             .buttonStyle(.plain)
 
-            VStack(spacing: 2) { // acercar @ al nombre
+            VStack(spacing: 2) {
                 Text("Alex")
                     .font(.custom("FWC2026-NormalBlack", size: 20))
                 
@@ -177,7 +176,7 @@ struct ProfileView: View {
         .background(.clear)
     }
 
-    // MARK: Stats (Grid 2x2 con tamaño uniforme)
+
     private var statsView: some View {
         let columns = [
             GridItem(.flexible(), spacing: 12),
@@ -194,7 +193,7 @@ struct ProfileView: View {
         .padding(.top, 16)
     }
 
-    // MARK: Stacked Cards (animación + navegación a WalletView)
+    
     private var stackedCardsSection: some View {
         VStack(alignment: .leading) {
             Text("MIS BOLETOS")
@@ -209,17 +208,14 @@ struct ProfileView: View {
                     let isDimmed = anySelected && !isSelected
 
                     StackCardView(data: item, isSelected: isSelected, isDimmed: isDimmed)
-                        // apilado: un poco a la derecha y arriba por carta
                         .offset(x: CGFloat(index) * 60, y: CGFloat(-index) * 10)
                         .zIndex(isSelected ? 100 : Double(index))
                         .onTapGesture {
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                                 selectedStackCardID = item.id
                             }
-                            // deja que se note el énfasis y navega a WalletView
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
                                 goToWallet = true
-                                // opcional: reset selección al volver
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                     selectedStackCardID = nil
                                 }
@@ -249,13 +245,13 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - Components
+
 
 struct StatCard: View {
     let icon: String
     let value: String
     let label: String
-    private let cardHeight: CGFloat = 56 // altura fija para uniformidad
+    private let cardHeight: CGFloat = 56
 
     var body: some View {
         HStack(spacing: 10) {
@@ -337,7 +333,9 @@ struct StackCardView: View {
     }
 }
 
-// MARK: - Avatar Picker (solo imágenes de la app)
+
+
+//Imagen perfil
 struct AvatarPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedName: String?

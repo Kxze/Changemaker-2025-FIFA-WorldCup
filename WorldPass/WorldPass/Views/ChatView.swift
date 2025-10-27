@@ -77,7 +77,6 @@ struct GeminiClient {
         }
         #if DEBUG
         if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
-            // Solo para previews
             return "AIzaSyDd575EyaeP40k4O4owwSmGWs_gd13sFe0"
         }
         #endif
@@ -125,7 +124,8 @@ struct GeminiClient {
     }
 }
 
-// =============================================================
+//
+
 
 extension Font {
     static func fwcTitle(_ size: CGFloat) -> Font {
@@ -137,8 +137,8 @@ extension Font {
 }
 
 private extension Color {
-    static let bubbleBot    = Color(red: 0.90, green: 0.97, blue: 0.92) // verde claro
-    static let bubbleUser   = Color(red: 0.95, green: 0.96, blue: 0.97) // gris claro
+    static let bubbleBot    = Color(red: 0.90, green: 0.97, blue: 0.92)
+    static let bubbleUser   = Color(red: 0.95, green: 0.96, blue: 0.97)
     static let bubbleStroke = Color.white.opacity(0.7)
 }
 
@@ -154,53 +154,32 @@ struct ChatbotFlowView: View {
 
 
 struct ZayuIntroView: View {
-    @State private var goToMain = false
-    // Si ZayuIntroView fue presentado como sheet/fullScreenCover y quieres cerrar en vez de navegar:
-    @Environment(\.dismiss) private var dismiss
-
     var body: some View {
         NavigationStack {
+            
+            
             ZStack {
                 Image("FondoVerde")
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
-
+                
                 VStack {
                     HStack {
-                        // BOTÓN "BACK" → manda a MainView()
-                        Button {
-                            // Opción A: Navegar a MainView empujándolo en el stack
-                            goToMain = true
-
-                            // Opción B (alternativa): si esta pantalla fue presentada como sheet/fullScreenCover
-                            // y quieres volver a la raíz (MainView ya está debajo), usa:
-                            // dismiss()
-                        } label: {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundStyle(.white.opacity(0.95))
-                                .frame(width: 34, height: 34)
-                                .background(Color.white.opacity(0.18))
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
-                        }
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.95))
+                            .frame(width: 34, height: 34)
+                            .background(Color.white.opacity(0.18))
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
+                            .opacity(0)
+                        
+                        //
                         Spacer()
                     }
-                    .padding(.horizontal)
-
-                    Spacer()
-                    // … tu contenido de intro aquí …
-                    Spacer()
-                }
-
-                // Enlace invisible controlado por estado
-                NavigationLink(destination: MainView(), isActive: $goToMain) {
-                    EmptyView()
-                }
-                .hidden()
-            }
-    
+                    
+                    .hidden()
     
 
             
@@ -249,7 +228,7 @@ struct ZayuIntroView: View {
     }
 }
 
-// =============================================================
+
 
 struct Message: Identifiable, Codable, Equatable {
     let id: UUID
@@ -265,7 +244,6 @@ struct Message: Identifiable, Codable, Equatable {
     }
 }
 
-// Persistencia simple en UserDefaults
 private enum ChatPersistence {
     static let key = "chat_history_v1"
 
@@ -274,7 +252,7 @@ private enum ChatPersistence {
             let data = try JSONEncoder().encode(messages)
             UserDefaults.standard.set(data, forKey: key)
         } catch {
-            // opcional: print("Error guardando chat: \(error)")
+            
         }
     }
 
@@ -325,7 +303,7 @@ struct IAPrediccionesView: View {
                             .padding(.top, 14)
                             .padding(.bottom, 110)
                         }
-                        .scrollDismissesKeyboard(.interactively) // bajar teclado nativo
+                        .scrollDismissesKeyboard(.interactively)
                         .onChange(of: messages.count) { _, _ in
                             withAnimation(.easeOut(duration: 0.25)) {
                                 proxy.scrollTo(messages.last?.id, anchor: .bottom)
@@ -342,14 +320,16 @@ struct IAPrediccionesView: View {
         }
         .onTapGesture { isFieldFocused = false }
         .onChange(of: messages) { _, newValue in
-            ChatPersistence.save(newValue) // guarda cada cambio del historial
+            ChatPersistence.save(newValue)
+            
+            // guarda cada cambio del historial
         }
     }
 
     // Header
     private var topBar: some View {
         HStack(spacing: 12) {
-            Button { dismiss() } label: {
+            NavigationLink(destination: MainView()) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.black)
@@ -358,6 +338,7 @@ struct IAPrediccionesView: View {
                     .clipShape(Circle())
                     .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
             }
+
 
             Spacer(minLength: 4)
 
@@ -375,10 +356,10 @@ struct IAPrediccionesView: View {
         .overlay(Divider(), alignment: .bottom)
     }
 
-    // Composer (sin botón "+")
+    
     private var composer: some View {
         HStack(spacing: 10) {
-            TextField("Pregunta o busca lo que quieras", text: $currentMessage, axis: .vertical)
+            TextField("Pregunta a Zayu", text: $currentMessage, axis: .vertical)
                 .font(.fwcText(16))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
@@ -420,17 +401,21 @@ struct IAPrediccionesView: View {
                 messages.append(Message(text: "Error al obtener respuesta de la IA.", isUser: false))
             }
             isLoading = false
-            ChatPersistence.save(messages) // guarda tras recibir
+            ChatPersistence.save(messages)
+            
+            // guarda chat
         }
     }
 
-    // ➜ Respuestas breves (máx. 2 oraciones) sin tocar la mecánica de la API.
+   
     private func fetchGeminiResponse(for text: String) async -> String? {
         let client = GeminiClient()
         let briefInstruction = "Responde de forma breve, clara y directa. Máximo 2 oraciones. "
         do {
             let reply = try await client.generate(briefInstruction + text)
-            // Filtro defensivo por si el modelo se alarga: recorte a ~280 caracteres
+            // Filtro de caracteres en gemini
+            
+            
             let maxChars = 280
             if reply.count > maxChars {
                 if let lastSpace = reply.prefix(maxChars).lastIndex(of: " ") {
@@ -444,9 +429,8 @@ struct IAPrediccionesView: View {
         }
     }
 
-    // MARK: - UI Components
 
-    // Burbujas con avatar a un lado
+    // Burbujas de perfil
     private struct ChatBubble: View {
         let message: Message
         let containerWidth: CGFloat

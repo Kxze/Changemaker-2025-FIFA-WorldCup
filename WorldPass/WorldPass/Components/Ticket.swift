@@ -61,7 +61,7 @@ struct Ticket: View {
             }
     }
 
-    // MARK: - Compact Card
+    //  Compact Card
     @State private var isOn = false
     @State private var isProcessingTap = false
 
@@ -166,7 +166,7 @@ struct Ticket: View {
     }
 }
 
-// MARK: - Sheet de QR con fondo según tema
+// Sheet de QR con fondo según tema
 private struct QRTicketSheet: View {
     let payload: String
     let backgroundAssetName: String

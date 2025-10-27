@@ -9,7 +9,7 @@ import Foundation
 
 struct Equipos: Identifiable, Hashable {
     let id = UUID()
-    let name: String   // Código o nombre a mostrar (ej. "MEX" o "México")
+    let name: String   // Código o nombre a mostrar ("MEX" o "México")
     let flag: String   // Nombre EXACTO del asset de la bandera en Assets.xcassets
 }
 

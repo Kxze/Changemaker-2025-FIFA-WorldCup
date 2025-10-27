@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct MainView: View {
-    // Fuente: todos los partidos con su grupo asociado en una lista plana
+
     private var todosLosPartidos: [(partido: Partido, grupo: String)] {
         var items: [(partido: Partido, grupo: String)] = []
         for grupo in gruposMundial2026 {
@@ -18,16 +19,14 @@ struct MainView: View {
         }
         return items
     }
-    
-    // Selecciona hasta 'maxCount' partidos sin equipos repetidos
+
     private func seleccionarPartidosSinRepetidos(from lista: [(partido: Partido, grupo: String)], maxCount: Int) -> [(partido: Partido, grupo: String)] {
-        var usados: Set<UUID> = [] // IDs de equipos usados
+        var usados: Set<UUID> = []
         var resultado: [(partido: Partido, grupo: String)] = []
-        
+
         for item in lista {
             let localID = item.partido.local.id
             let visitanteID = item.partido.visitante.id
-            // Si ninguno de los dos equipos está ya en uso, añadimos el partido
             if !usados.contains(localID) && !usados.contains(visitanteID) {
                 resultado.append(item)
                 usados.insert(localID)
@@ -37,57 +36,63 @@ struct MainView: View {
         }
         return resultado
     }
-    
+
     private var partidosEnVivo: [(partido: Partido, grupo: String)] {
-        // Puedes barajar para variedad y luego filtrar sin repetidos:
         let barajada = todosLosPartidos.shuffled()
         return seleccionarPartidosSinRepetidos(from: barajada, maxCount: 5)
     }
-    
-    // Generador de marcador ficticio para "En vivo"
+
     private func marcadorFicticio(index: Int) -> (local: Int, visitante: Int, minuto: Int?) {
-        // Minuto entre 1 y 90, marcador pequeño
         let local = (index % 3)
         let visitante = ((index + 1) % 3)
         let minuto = 5 + (index * 13) % 90
         return (local, visitante, minuto)
     }
-    
-    // --- AGREGADO: controlar el sheet del chat
-    @State private var showChatbotSheet = false
-    
+
+    @State private var showChatbotFullScreen = false
+    @State private var horaSugerida: String = "14:00"
+    @State private var probLluvia: Int = 56
+
+    // Body
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                VStack{
-                    HStack{
+
+                // PRÓXIMOS EVENTOS
+                VStack {
+                    HStack {
                         Text("PRÓXIMOS EVENTOS")
                         Spacer()
                     }
                     .padding(.horizontal, 20)
-                    .font(.custom("FWC2026-NormalBlack", size: 20))
-                    
+                    .font(.fwcBlack(20))
+
                     CardEventos()
-                    
                 }
-                // Sección En vivo (Horizontal)
+
+                // ¡HOLA, SOY ZAYU!
+                ZayuSection(hora: horaSugerida, probLluvia: probLluvia) {
+                    showChatbotFullScreen = true
+                }
+                .padding(.top, 4)
+
+                // HOY EN VIVO
                 if !partidosEnVivo.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("HOY")
-                            .font(.custom("FWC2026-NormalBlack", size: 20))
-                        HStack{
+                            .font(.fwcBlack(20))
+                        HStack {
                             Image(systemName: "circle.fill")
                                 .foregroundStyle(.red)
                                 .glassEffect()
                             Text("EN VIVO")
-                                .font(.custom("FWC2026-NormalRegular", size: 15))
-                            
-                            
+                                .font(.fwcRegular(15))
                         }
                     }
                     .padding(.horizontal, 20)
+
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment:.center, spacing: 50) {
+                        HStack(alignment: .center, spacing: 50) {
                             ForEach(Array(partidosEnVivo.enumerated()), id: \.offset) { idx, item in
                                 let m = marcadorFicticio(index: idx)
                                 CardEnVivo(
@@ -98,31 +103,23 @@ struct MainView: View {
                                     minuto: m.minuto
                                 )
                                 .frame(width: 300)
-                                // Transición/animación durante el scroll
                                 .scrollTransition(.interactive, axis: .horizontal) { content, phase in
                                     content
                                         .scaleEffect(phase.isIdentity ? 1.0 : 0.94)
                                         .opacity(phase.isIdentity ? 1.0 : 0.85)
                                 }
-                                .zIndex(1) // ayuda a que el overdraw no quede por debajo
+                                .zIndex(1)
                             }
                         }
-                        // margen interno para permitir que el efecto se salga sin ser cortado
                         .padding(.horizontal, 40)
-                        // Importante: evitar clipping del scroll
                         .contentShape(Rectangle())
                     }
-                    
-                    // Deshabilita el clip del ScrollView horizontal (iOS 17+)
                     .scrollClipDisabled(true)
-                    // Hace que el scroll se alinee por vistas, más suave
                     .scrollTargetBehavior(.viewAligned)
-                    // Layout target para que cada tarjeta sea un target de scroll
                     .scrollTargetLayout()
                 } else {
-                    // Fallback si no hay suficientes partidos (no debería ocurrir con 48 equipos)
                     Text("No hay partidos en vivo disponibles")
-                        .font(.custom("FWC2026-NormalRegular", size: 14))
+                        .font(.fwcRegular(14))
                         .foregroundColor(.gray)
                         .padding(.horizontal)
                 }
@@ -130,12 +127,10 @@ struct MainView: View {
             .padding(.vertical, 16)
         }
         .scrollEdgeEffectStyle(.soft, for: .bottom)
-        .toolbar{
+        .navigationBarBackButtonHidden(true) //
+        .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                NavigationLink {
-                    Tournament()
-                    // No ocultamos la barra de navegación para que aparezca "Regresar"
-                } label: {
+                NavigationLink { Tournament() } label: {
                     Image(systemName: "globe.americas.fill")
                         .foregroundStyle(.secondary)
                 }
@@ -144,37 +139,141 @@ struct MainView: View {
                 Image("logo")
             }
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    ProfileView()
-                    // No ocultamos la barra para tener back si se requiere
-                } label: {
+                NavigationLink { ProfileView() } label: {
                     Image(systemName: "person")
                         .foregroundStyle(.secondary)
                 }
             }
         }
-        // --- CAMBIADO: ahora es un botón que abre el sheet del chat
         .overlay(alignment: .bottomTrailing) {
             Button {
-                showChatbotSheet = true
+                showChatbotFullScreen = true
             } label: {
                 Image(systemName: "apple.intelligence")
-                    .font(.custom("", size: 25))
+                    .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(.gray)
-                    .padding(12)
-                    .glassEffect()
+                    .frame(width: 44, height: 44)
+                    .background(.ultraThinMaterial, in: Circle())
+                    .overlay(Circle().stroke(.white.opacity(0.6), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.15), radius: 10, y: 4)
             }
-            .padding(.trailing, 30)
+            .padding(.trailing, 26)
+            .padding(.bottom, 18)
         }
-        // --- NUEVO: sheet con el chat
-        .sheet(isPresented: $showChatbotSheet) {
+        .fullScreenCover(isPresented: $showChatbotFullScreen) {
             ChatbotFlowView()
-                .presentationDetents([.large]) // Puedes ajustar: [.medium, .large]
-                .presentationDragIndicator(.visible)
+                .ignoresSafeArea()
         }
     }
 }
 
-#Preview {
-    NavigationStack { MainView() }
+private struct ZayuSection: View {
+    let hora: String
+    let probLluvia: Int
+    var onTap: (() -> Void)? = nil
+
+    private let titleSize: CGFloat = 28
+    private let cardCorner: CGFloat = 28
+    private let bubbleCorner: CGFloat = 24
+    private let innerPad: CGFloat = 20
+
+    private let zayuBase: CGFloat = 176
+    private let zayuMin: CGFloat  = 148
+    private let zayuMax: CGFloat  = 200
+    private let zayuOverlap: CGFloat = 12
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("¡HOLA, SOY ZAYU!")
+                .font(.fwcBlack(titleSize))
+                .foregroundColor(.black)
+                .padding(.horizontal, 2)
+
+            ZStack {
+                RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                    .fill(Color.white)
+                    .shadow(color: .black.opacity(0.10), radius: 18, y: 10)
+
+                GeometryReader { geo in
+                    let W = geo.size.width
+                    let zayuW = max(zayuMin, min(zayuMax, min(zayuBase, W * 0.36)))
+                    let reserveTrailing = max(96, zayuW - (zayuOverlap + 12))
+
+                    //
+                    Circle()
+                        .fill(Color.white.opacity(0.92))
+                        .frame(width: zayuW * 0.94, height: zayuW * 0.94)
+                        .offset(x: (W/2) - (zayuW * 0.35), y: 18)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.45), lineWidth: 1)
+                                .frame(width: zayuW * 0.94, height: zayuW * 0.94)
+                                .offset(x: (W/2) - (zayuW * 0.35), y: 18)
+                        )
+
+                    
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(mensaje)
+                            .multilineTextAlignment(.leading)
+                            .lineSpacing(4)
+                            .padding(.vertical, 20)
+                            .padding(.leading, innerPad)
+                            .padding(.trailing, reserveTrailing)
+                            .background(
+                                RoundedRectangle(cornerRadius: bubbleCorner, style: .continuous)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: bubbleCorner)
+                                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                    )
+                                    .shadow(color: .black.opacity(0.06), radius: 10, y: 6)
+                            )
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, innerPad)
+                    .padding(.top, innerPad)
+                    .padding(.bottom, innerPad + 6)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                    // Zayu
+                    Image("Zayu")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: zayuW)
+                        .offset(x: -zayuOverlap, y: -6)
+                        .padding(.trailing, innerPad)
+                        .padding(.bottom, innerPad)
+                        .shadow(color: .black.opacity(0.15), radius: 10, y: 6)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                }
+            }
+            .frame(minHeight: 270) // un poco más alta para textos largos
+            .contentShape(RoundedRectangle(cornerRadius: cardCorner, style: .continuous))
+            .onTapGesture { onTap?() }
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 10)
+    }
+
+    // Párrafo con negritas puntuales
+    private var mensaje: AttributedString {
+        var regular = AttributeContainer()
+        regular.font = .custom("FWC2026-NormalRegular", size: 14)
+        regular.foregroundColor = .black.opacity(0.82)
+
+        var bold = AttributeContainer()
+        bold.font = .custom("FWC2026-NormalBlack", size: 14)
+        bold.foregroundColor = .black
+
+        var s = AttributedString("Recuerda que tienes un partido hoy. Te recomiendo salir a las ")
+        s.mergeAttributes(regular)
+        var h  = AttributedString(hora); h.mergeAttributes(bold); s.append(h)
+        var t1 = AttributedString(" para llegar a tiempo. "); t1.mergeAttributes(regular); s.append(t1)
+        var l1 = AttributedString("Lleva paraguas"); l1.mergeAttributes(bold); s.append(l1)
+        var t2 = AttributedString(", existe "); t2.mergeAttributes(regular); s.append(t2)
+        var p  = AttributedString("\(probLluvia)%"); p.mergeAttributes(bold); s.append(p)
+        var t3 = AttributedString(" probabilidad de "); t3.mergeAttributes(regular); s.append(t3)
+        var ll = AttributedString("lluvia."); ll.mergeAttributes(bold); s.append(ll)
+        return s
+    }
 }

@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct MatchesView: View {
-    // MARK: - Estado y utilidades del calendario (antes en CalendarPopUp)
+    
+    
+    // Estado y utilidades del calendario
     @State private var showCalendar = false
     @State private var selectedDate: Date = Date()
 
@@ -38,7 +40,7 @@ struct MatchesView: View {
         return start...end
     }
 
-    // Fuente: todos los partidos con su grupo asociado en una lista plana
+    // todos los partidos con su grupo asociado en una lista plana
     private var todosLosPartidos: [(partido: Partido, grupo: String)] {
         var items: [(partido: Partido, grupo: String)] = []
         for grupo in gruposMundial2026 {

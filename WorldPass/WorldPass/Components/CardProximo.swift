@@ -10,8 +10,8 @@ import SwiftUI
 struct CardProximo: View {
     let partido: Partido
     let grupo: String
-    let fecha: String   // Ej: "16 JUL 2026"
-    let hora: String    // Ej: "19:00"
+    let fecha: String   //  "16 JUL 2026"
+    let hora: String    //  "19:00"
 
     var body: some View {
         ZStack{

@@ -7,7 +7,6 @@
 
 import Foundation
 
-// MARK: - Tipos de apoyo
 
 enum MatchSide: String, Codable, Hashable {
     case local
@@ -63,7 +62,7 @@ struct TeamMatchStats: Codable, Hashable {
     let expectedGoals: Double
 
     // Posesión
-    let possession: Double // 0...100 (se asegura que local + visitante = 100)
+    let possession: Double
 
     // Otras estadísticas
     let corners: Int
@@ -75,11 +74,12 @@ struct TeamMatchStats: Codable, Hashable {
 
     // Pase
     let passes: Int
-    let passAccuracy: Double // 0...100
+    let passAccuracy: Double // 
 }
 
 // Resultado y estadísticas completas del partido
-// Nota: No declaramos Codable aquí porque `Partido`/`Equipos` no son Codable.
+//
+
 struct MatchStats: Identifiable, Hashable {
     let id = UUID()
     let partido: Partido
@@ -93,14 +93,10 @@ struct MatchStats: Identifiable, Hashable {
     }
 }
 
-// MARK: - Simulador
+// Simulador
 
 enum MatchSimulator {
-    /// Simula un partido a partir de un `Partido` (local, visitante).
-    /// - Parameters:
-    ///   - partido: Encuentro a simular.
-    ///   - seed: Semilla opcional para reproducibilidad.
-    /// - Returns: `MatchStats` con marcador final y estadísticas.
+   
     static func simulate(partido: Partido, seed: Int? = nil) -> MatchStats {
         let rng = SeededRandom(seed: seed ?? defaultSeed(for: partido))
         let localWeight = rating(for: partido.local)
@@ -143,34 +139,24 @@ enum MatchSimulator {
             )
         }
 
-        // Posesión (50/50 +/- 10%, sesgada por el peso)
+        //
+        
+        
         let basePoss = 50.0 + (localWeight - visitanteWeight) * 10.0
         let localPoss = clamp(basePoss + rng.randomDouble(in: -6.0...6.0), 35.0, 65.0)
         let visitPoss = 100.0 - localPoss
-
-        // Remates y a puerta correlacionados con xG y goles
         let (shotsL, onTargetL) = shotsFrom(xg: xgLocal, goals: golesLocal, rng: rng)
         let (shotsV, onTargetV) = shotsFrom(xg: xgVisit, goals: golesVisit, rng: rng)
-
-        // Corners correlacionados con remates (redondea el Double ANTES de convertir a Int)
         let cornersL = max(0, Int((Double(shotsL) * rng.randomDouble(in: 0.15...0.35)).rounded()))
         let cornersV = max(0, Int((Double(shotsV) * rng.randomDouble(in: 0.15...0.35)).rounded()))
-
-        // Offsides bajos
         let offsidesL = rng.randomInt(in: 0...3)
         let offsidesV = rng.randomInt(in: 0...3)
-
-        // Faltas y tarjetas
         let foulsL = rng.randomInt(in: 7...16)
         let foulsV = rng.randomInt(in: 7...16)
-
         let yellowL = rng.randomInt(in: 0...4)
         let yellowV = rng.randomInt(in: 0...4)
-
         let redL = rng.randomBool(probability: 0.08) ? 1 : 0
         let redV = rng.randomBool(probability: 0.08) ? 1 : 0
-
-        // Eventos de tarjetas con minutos
         let cardEventsL: [CardEvent] = generateCardEvents(
             yellow: yellowL,
             red: redL,
@@ -178,6 +164,10 @@ enum MatchSimulator {
             team: partido.local,
             rng: rng
         )
+        
+        
+        
+        
         let cardEventsV: [CardEvent] = generateCardEvents(
             yellow: yellowV,
             red: redV,
@@ -186,7 +176,6 @@ enum MatchSimulator {
             rng: rng
         )
 
-        // Pases y precisión correlacionados con posesión y “fuerza”
         let passesL = passesFromPossession(localPoss, rng: rng)
         let passesV = passesFromPossession(visitPoss, rng: rng)
         let passAccL = clamp(72.0 + (localWeight * 8.0) + rng.randomDouble(in: -4.0...4.0), 68.0, 92.0)
@@ -229,7 +218,6 @@ enum MatchSimulator {
         return MatchStats(partido: partido, local: localStats, visitante: visitanteStats)
     }
 
-    /// Simula una lista de partidos.
     static func simulateMany(_ partidos: [Partido], seed: Int? = nil) -> [MatchStats] {
         partidos.enumerated().map { idx, p in
             let combinedSeed = (seed ?? 0) &+ idx &+ defaultSeed(for: p)
@@ -237,12 +225,7 @@ enum MatchSimulator {
         }
     }
 
-    /// Simula todos los partidos de los grupos generados a partir de una lista de equipos.
-    /// - Parameters:
-    ///   - equipos: Lista de equipos (ya barajados si lo deseas).
-    ///   - mezclarEnGrupos: Si true, vuelve a barajar al formar los grupos (usa tu generador).
-    ///   - seed: Semilla base opcional.
-    /// - Returns: Lista de `MatchStats` de todos los partidos de los grupos formados.
+   
     static func simulateFromTeams(_ equipos: [Equipos], mezclarEnGrupos: Bool = false, seed: Int? = nil) -> [MatchStats] {
         let grupos = generarGruposDesdeEquipos(equipos, mezclar: mezclarEnGrupos)
         let todos = grupos.flatMap { $0.partidos }
@@ -250,7 +233,6 @@ enum MatchSimulator {
     }
 }
 
-// MARK: - Helpers de simulación
 
 private func defaultSeed(for partido: Partido) -> Int {
     var hasher = Hasher()
@@ -260,16 +242,14 @@ private func defaultSeed(for partido: Partido) -> Int {
 }
 
 private func rating(for equipo: Equipos) -> Double {
-    // Peso pseudo-determinista 0.85 ... 1.15 según el nombre
     var hasher = Hasher()
     hasher.combine(equipo.name)
     let h = hasher.finalize()
-    let u = Double(abs(h % 10_000)) / 10_000.0 // [0,1]
+    let u = Double(abs(h % 10_000)) / 10_000.0
     return 0.85 + u * 0.30
 }
 
 private func shotsFrom(xg: Double, goals: Int, rng: SeededRandom) -> (shots: Int, onTarget: Int) {
-    // Disparos correlacionados con xG y goles (pero con variación)
     let expectedShots = max(3.0, xg * rng.randomDouble(in: 5.0...9.0) + Double(goals) * rng.randomDouble(in: 1.0...2.0))
     let shots = max(1, Int((expectedShots + rng.randomDouble(in: -2.0...2.0)).rounded()))
     let onTarget = clamp(Int((Double(shots) * rng.randomDouble(in: 0.3...0.55)).rounded()), 0, shots)
@@ -277,7 +257,6 @@ private func shotsFrom(xg: Double, goals: Int, rng: SeededRandom) -> (shots: Int
 }
 
 private func passesFromPossession(_ possession: Double, rng: SeededRandom) -> Int {
-    // Pases base 280...720 según posesión
     let base = 280.0 + (possession / 100.0) * 480.0
     let noise = rng.randomDouble(in: -60.0...60.0)
     return max(150, Int((base + noise).rounded()))
@@ -293,7 +272,6 @@ private func uniqueSortedMinutes(count: Int, rng: SeededRandom) -> [Int] {
 }
 
 private func randomPlayerName(for equipo: Equipos, rng: SeededRandom) -> String {
-    // Nombres genéricos “Jugador 9 (MEX)”
     let number = rng.randomInt(in: 1...99)
     return "Jugador \(number) (\(equipo.name))"
 }
@@ -324,13 +302,11 @@ private func generateCardEvents(yellow: Int, red: Int, side: MatchSide, team: Eq
             )
         }
     }
-    // Ordenar por minuto ascendente
     events.sort { $0.minute < $1.minute }
     return events
 }
 
 private func poissonSample(mean: Double, rng: SeededRandom) -> Int {
-    // Knuth's algorithm
     let L = exp(-mean)
     var k = 0
     var p = 1.0
@@ -350,13 +326,11 @@ private func round(_ value: Double, digits: Int) -> Double {
     return (value * pow10).rounded() / pow10
 }
 
-// MARK: - RNG con semilla
 
 private final class SeededRandom {
     private var state: UInt64
 
     init(seed: Int) {
-        // Mezcla la semilla para evitar patrones pobres
         var x = UInt64(bitPattern: Int64(seed))
         x ^= 0x9E3779B97F4A7C15
         x = x &* 0xBF58476D1CE4E5B9
@@ -364,7 +338,7 @@ private final class SeededRandom {
         self.state = x
     }
 
-    // Xorshift64*
+    //
     private func next() -> UInt64 {
         var x = state
         x ^= x >> 12
@@ -375,7 +349,6 @@ private final class SeededRandom {
     }
 
     func randomUnit() -> Double {
-        // [0, 1)
         let maxU = Double(UInt64.max)
         return Double(next()) / (maxU + 1.0)
     }
@@ -396,32 +369,25 @@ private final class SeededRandom {
     }
 }
 
-// MARK: - Próximos partidos (excluyendo finalizados)
-
-/// Modelo para usar directamente en CardProximo.
+// Próximos partidos
 struct UpcomingFixture: Identifiable, Hashable {
     let id = UUID()
     let partido: Partido
     let grupo: String
-    let fecha: String   // "16/jul"
-    let hora: String    // "19:00"
+    let fecha: String
+    let hora: String
 }
 
 enum UpcomingMatchesBuilder {
-    /// Genera próximos partidos a partir de grupos barajeados, excluyendo los ya finalizados.
-    /// - Parameters:
-    ///   - finishedStats: Lista de partidos finalizados (MatchStats) a excluir.
-    ///   - count: Cantidad de próximos partidos deseada.
-    ///   - startDate: Fecha base para asignar fechas/horas (por defecto 16 JUN 2026 19:00).
-    /// - Returns: Lista de UpcomingFixture listos para CardProximo.
     static func generate(excluding finishedStats: [MatchStats], count: Int = 10, startDate: Date? = nil) -> [UpcomingFixture] {
         let finishedPartidos = finishedStats.map { $0.partido }
         return generate(excludingPartidos: finishedPartidos, count: count, startDate: startDate)
     }
 
-    /// Variante que recibe directamente los `Partido` finalizados.
+
     static func generate(excludingPartidos finished: [Partido], count: Int = 10, startDate: Date? = nil) -> [UpcomingFixture] {
-        // Clave canónica para un partido (independiente del orden local/visitante)
+
+
         func key(for p: Partido) -> String {
             let a = p.local.name
             let b = p.visitante.name
@@ -429,8 +395,6 @@ enum UpcomingMatchesBuilder {
         }
 
         let finishedKeys = Set(finished.map(key(for:)))
-
-        // Generamos grupos barajeados y sus partidos
         let grupos = generarGruposDesdeEquipos(equiposDetails, mezclar: true)
         var candidatos: [(partido: Partido, grupo: String)] = []
         for g in grupos {
@@ -442,10 +406,9 @@ enum UpcomingMatchesBuilder {
             }
         }
 
-        // Si no hay suficientes, devolvemos lo que haya.
-        let seleccion = Array(candidatos.shuffled().prefix(count))
 
-        // Asignamos fecha/hora deterministas a partir de una base.
+
+        let seleccion = Array(candidatos.shuffled().prefix(count))
         let calendar = Calendar(identifier: .gregorian)
         let baseDate: Date = {
             if let startDate { return startDate }
@@ -460,7 +423,7 @@ enum UpcomingMatchesBuilder {
 
         let dfFecha = DateFormatter()
         dfFecha.locale = Locale(identifier: "es_ES")
-        dfFecha.dateFormat = "dd/MMM" // ejemplo: "16/jul"
+        dfFecha.dateFormat = "dd/MMM"
 
         let dfHora = DateFormatter()
         dfHora.locale = Locale(identifier: "es_ES")

@@ -27,7 +27,7 @@ struct WalletView: View {
          backgroundImageName: "CardM")
     ]
 
-    // Boletos apilados
+    // Boletos
     @State private var tickets: [(qrPayload: String, theme: Ticket.Theme)] = [
         (qrPayload: "{\"uuid\":\"WALLET-TICKET-001\",\"match\":\"MEX-NED\",\"seat\":\"14-F\"}", theme: .rojo),
         (qrPayload: "{\"uuid\":\"WALLET-TICKET-002\",\"match\":\"USA-CAN\",\"seat\":\"22-B\"}", theme: .azul),
@@ -42,153 +42,44 @@ struct WalletView: View {
     @State private var showDeleteAlert: Bool = false
     @State private var indexPendingDeletion: Int? = nil
 
-    // Tarjeta seleccionada para animarla “fuera” de la pila
+    // Tarjeta seleccionada para animarla “fuera” de la pila antes de abrir sheet
     @State private var selectedIndex: Int? = nil
-
-    // Boleto seleccionado para levantarlo visualmente
-    @State private var selectedTicketIndex: Int? = nil
-
-    // NUEVO: full screen de Expenses
-    @State private var showExpenses: Bool = false
 
     var body: some View {
         ScrollView {
             VStack(spacing: 175) {
-                // Sección tarjetas de pago (pila existente)
-                if cards.isEmpty {
-                    Text("Sin tarjetas aún")
-                        .font(.custom("FWC2026-NormalRegular", size: 14))
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 40)
-                } else {
-                    // Parámetros de la pila
-                    let cardHeight: CGFloat = 180
-                    let gap: CGFloat = 78 // separación visible entre tarjetas apiladas
-
-                    ZStack(alignment: .top) {
-                        ForEach(cards.indices, id: \.self) { index in
-                            let card = cards[index]
-                            let isSelected = selectedIndex == index
-                            let baseOffsetY = CGFloat(index) * gap
-
-                            CardItemView(
-                                holderName: card.holderName,
-                                cardNumber: card.cardNumber,
-                                expiry: card.expiry,
-                                brand: card.brand,
-                                backgroundImageName: card.backgroundImageName,
-                                onOpenReader: {
-                                    // Animar la tarjeta para que “salga” de la pila y luego abrir el lector
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                        selectedIndex = index
-                                    }
-                                    // Opcional: abrir el lector tras un pequeño retraso para apreciar la animación
-                                    Task {
-                                        try? await Task.sleep(nanoseconds: 350_000_000)
-                                        showReaderSheet = true
-                                    }
-                                },
-                                onRequestDelete: {
-                                    indexPendingDeletion = index
-                                    showDeleteAlert = true
-                                }
-                            )
-                            .frame(height: cardHeight)
-                            // Apilado: desplazamiento por índice + “salida” si está seleccionada
-                            .offset(y: baseOffsetY + (isSelected ? -40 : 0))
-                            .scaleEffect(isSelected ? 1.03 : 1.0)
-                            .shadow(color: .black.opacity(isSelected ? 0.25 : 0.15),
-                                    radius: isSelected ? 12 : 6,
-                                    x: 0,
-                                    y: isSelected ? 10 : 4)
-                            .opacity(isSelected ? 1.0 : 0.98)
-                            // La seleccionada al frente
-                            .zIndex(isSelected ? 100 : Double(index))
-                            .animation(.spring(response: 0.4, dampingFraction: 0.85), value: selectedIndex)
+                // Sección tarjetas de pago
+                CardsStackSection(
+                    cards: cards,
+                    selectedIndex: selectedIndex,
+                    onOpenReader: { index in
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                            selectedIndex = index
                         }
-                    }
-                    // Altura total para que el ScrollView permita ver toda la pila
-                    .frame(height: cardHeight + CGFloat(max(0, cards.count - 1)) * gap + -100)
-                    .padding(.horizontal)
-                }
-
-                // Un Ticket dentro del VStack - ahora apilados
-                VStack(alignment: .leading, spacing: -30) {
-                    Text("BOLETOS")
-                        .font(.custom("FWC2026-NormalBlack", size: 20))
-
-                    // Parámetros de la pila de boletos
-                    let ticketBaseHeight: CGFloat = 520      // altura interna del Ticket
-                    let ticketScale: CGFloat = 0.85          // misma escala que usabas antes
-                    let ticketHeight: CGFloat = ticketBaseHeight * ticketScale
-                    let ticketGap: CGFloat = 78               // separación visible entre boletos apilados
-
-                    if tickets.isEmpty {
-                        Text("Sin boletos aún")
-                            .font(.custom("FWC2026-NormalRegular", size: 14))
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 12)
-                    } else {
-                        ZStack(alignment: .top) {
-                            ForEach(tickets.indices, id: \.self) { idx in
-                                let t = tickets[idx]
-                                let isSelected = selectedTicketIndex == idx
-                                let baseOffsetY = CGFloat(idx) * ticketGap
-
-                                Ticket(qrPayload: t.qrPayload, theme: t.theme)
-                                    .scaleEffect(ticketScale)
-                                    .shadow(color: .black.opacity(isSelected ? 0.22 : 0.12),
-                                            radius: isSelected ? 12 : 10,
-                                            x: 0,
-                                            y: isSelected ? 10 : 6)
-                                    .offset(y: baseOffsetY + (isSelected ? -40 : 0))
-                                    .scaleEffect(isSelected ? 0.88 : ticketScale, anchor: .top)
-                                    .opacity(isSelected ? 1.0 : 0.99)
-                                    .zIndex(isSelected ? 100 : Double(idx))
-                                    .onTapGesture {
-                                        // Pequeña animación de levantar el boleto al tocarlo
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                            selectedTicketIndex = idx
-                                        }
-                                        // Devolverlo después de un breve momento
-                                        Task {
-                                            try? await Task.sleep(nanoseconds: 500_000_000)
-                                            withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
-                                                selectedTicketIndex = nil
-                                            }
-                                        }
-                                    }
-                            }
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 350_000_000)
+                            showReaderSheet = true
                         }
-                        // Altura total para permitir el scroll de toda la pila de boletos
-                        .frame(height: ticketHeight + CGFloat(max(0, tickets.count - 1)) * ticketGap + 20)
-                        .padding(.horizontal)
+                    },
+                    onRequestDelete: { index in
+                        indexPendingDeletion = index
+                        showDeleteAlert = true
                     }
-                }
-                .padding(.bottom, 8)
+                )
+                .padding(.horizontal)
+
+                // Sección boletos (stack → carrusel)
+                TicketsCarouselSection(tickets: tickets)
+                    .padding(.bottom, 8)
             }
             .padding(.bottom, 32)
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // Título original en el centro
             ToolbarItem(placement: .title) {
                 Text("WALLET")
                     .font(.custom("FWC2026-NormalBlack", size: 20))
             }
-
-            
-            
-            ToolbarItemGroup(placement: .topBarLeading) {
-                Button {
-                    showExpenses = true
-                } label: {
-                    Image(systemName: "person.3.fill")
-                }
-
-            }
-            
-            // Botón existente de agregar tarjeta (lado superior derecho)
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
                     showAddCardSheet = true
@@ -200,7 +91,6 @@ struct WalletView: View {
         }
         // Sheet: “Acerca el iPhone al lector”
         .sheet(isPresented: $showReaderSheet, onDismiss: {
-            // Al cerrar el lector, reestablecemos la pila
             withAnimation(.spring(response: 0.4, dampingFraction: 0.9)) {
                 selectedIndex = nil
             }
@@ -240,136 +130,10 @@ struct WalletView: View {
         } message: {
             Text("¿Deseas eliminar esta tarjeta?")
         }
-        // NUEVO: Presentación a pantalla completa de ExpensesRootView
-        .fullScreenCover(isPresented: $showExpenses) {
-            ExpensesRootView()
-                .ignoresSafeArea()
-        }
     }
 }
 
-// tarjeta con overlay y gesto
-private struct CardItemView: View {
-    let holderName: String
-    let cardNumber: String
-    let expiry: String
-    let brand: String
-    let backgroundImageName: String
-
-    var onOpenReader: () -> Void
-    var onRequestDelete: () -> Void
-
-    @State private var dragOffsetX: CGFloat = 0
-
-    // Umbral para disparar la eliminación
-    private let triggerThreshold: CGFloat = -100
-
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            // Fondo opcional para feedback visual al arrastrar
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.red.opacity(max(0, min(0.25, Double(-dragOffsetX / 200))))) // se intensifica al arrastrar a la izquierda)
-                .overlay(
-                    HStack {
-                        Spacer()
-                        Image(systemName: "trash")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.9))
-                            .padding(.trailing, 20)
-                            .opacity(dragOffsetX < 0 ? min(1, Double(-dragOffsetX / 80)) : 0)
-                    }
-                )
-
-            // Tarjeta
-            CardPay(
-                backgroundImageName: backgroundImageName,
-                holderName: holderName,
-                cardNumber: cardNumber,
-                expiry: expiry,
-                brand: brand
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous)) // toda la tarjeta es "tocable"
-            .offset(x: dragOffsetX)
-            // Tap en toda la tarjeta para abrir el lector (y disparar la animación en el padre)
-            .simultaneousGesture(
-                TapGesture().onEnded {
-                    onOpenReader()
-                }
-            )
-            // Gesto de arrastre para eliminar
-            .gesture(
-                DragGesture(minimumDistance: 5)
-                    .onChanged { value in
-                        // Solo permitir arrastrar hacia la izquierda
-                        dragOffsetX = min(0, value.translation.width)
-                    }
-                    .onEnded { value in
-                        if value.translation.width <= triggerThreshold {
-                            // Dispara la solicitud de eliminación
-                            onRequestDelete()
-                        }
-                        // Regresa la tarjeta a su lugar
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                            dragOffsetX = 0
-                        }
-                    }
-            )
-
-            .buttonStyle(.plain)
-            .padding(10)
-            .offset(x: -4, y: 4)
-            .accessibilityLabel("Abrir lector")
-        }
-        .frame(height: 180)
-    }
-}
-
-// Blur nativo para el overlay
-private struct VisualEffectBlur: UIViewRepresentable {
-    let material: UIBlurEffect.Style
-
-    init(material: UIBlurEffect.Style) {
-        self.material = material
-    }
-
-    func makeUIView(context: Context) -> UIVisualEffectView {
-        UIVisualEffectView(effect: UIBlurEffect(style: material))
-    }
-
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
-        uiView.effect = UIBlurEffect(style: material)
-    }
-}
-
-//
-private struct GlassIconButton: View {
-    let imageAssetName: String
-    var action: () -> Void
-    var size: CGFloat = 18
-    var body: some View {
-        Button(action: action) {
-            Image(imageAssetName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: size, height: size)
-                .padding(10)
-                .background(
-                    VisualEffectBlur(material: .systemUltraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color.white.opacity(0.35), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Dividir gastos")
-    }
-}
-
-// Sheet para agregar tarjeta (16 dígitos)
+// MARK: - Sheet para agregar tarjeta (16 dígitos)
 private struct AddCardSheet: View {
     var onAdd: ((holderName: String, cardNumber: String, expiry: String, brand: String, backgroundImageName: String)) -> Void
     var onCancel: () -> Void
@@ -378,7 +142,6 @@ private struct AddCardSheet: View {
     @State private var cardNumber: String = "" // 16 dígitos
     @State private var expiry: String = ""
     @State private var brand: String = "VISA"
-    // Inicializamos vacío; se asignará aleatoriamente en onAppear
     @State private var backgroundImageName: String = ""
 
     private let brands = ["VISA", "Mastercard", "Amex"]
@@ -397,7 +160,6 @@ private struct AddCardSheet: View {
                     TextField("Número de tarjeta (16 dígitos)", text: $cardNumber)
                         .keyboardType(.numberPad)
                         .onChange(of: cardNumber) { _, newValue in
-                            // Mantener solo dígitos y limitar a 16
                             let digits = newValue.filter { $0.isNumber }
                             cardNumber = String(digits.prefix(16))
                         }
@@ -406,7 +168,6 @@ private struct AddCardSheet: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .onChange(of: expiry) { _, newValue in
-                            // Formateo simple MM/AA
                             let digits = newValue.filter { $0.isNumber }.prefix(4)
                             var formatted = ""
                             for (i, ch) in digits.enumerated() {
@@ -453,7 +214,6 @@ private struct AddCardSheet: View {
             }
         }
         .onAppear {
-            // Elegir aleatoriamente un fondo al abrir la hoja
             backgroundImageName = sampleBackgrounds.randomElement() ?? "CardC"
         }
     }
@@ -465,8 +225,7 @@ private struct AddCardSheet: View {
     }
 }
 
-
-
+// MARK: - Mock de “Hold Near Reader”
 private struct HoldNearReaderSheet: View {
     var onCancel: () -> Void
 

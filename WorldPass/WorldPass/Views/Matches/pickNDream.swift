@@ -283,21 +283,25 @@ private func logEquiposFaltantes() {
 
 
 //
-struct ConfettiView: UIViewRepresentable {
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.backgroundColor = .clear
-        let emitter = CAEmitterLayer()
-        emitter.emitterPosition = CGPoint(x: UIScreen.main.bounds.width/2, y: -10)
+final class ConfettiContainerView: UIView {
+    private let emitter = CAEmitterLayer()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+
         emitter.emitterShape = .line
-        emitter.emitterSize = CGSize(width: UIScreen.main.bounds.width, height: 1)
+        layer.addSublayer(emitter)
 
         let shapes: [UIImage] = [
             UIImage(systemName: "square.fill")!,
             UIImage(systemName: "circle.fill")!,
             UIImage(systemName: "triangle.fill")!
         ]
-        let colors: [UIColor] = [.systemRed, .systemBlue, .systemGreen, .systemOrange, .systemPink, .systemPurple, .systemTeal, .systemYellow]
+        let colors: [UIColor] = [
+            .systemRed, .systemBlue, .systemGreen, .systemOrange,
+            .systemPink, .systemPurple, .systemTeal, .systemYellow
+        ]
 
         emitter.emitterCells = colors.flatMap { color in
             shapes.map { shape in
@@ -316,9 +320,28 @@ struct ConfettiView: UIViewRepresentable {
                 return c
             }
         }
-        view.layer.addSublayer(emitter)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) { emitter.birthRate = 0 }
-        return view
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) { [weak self] in
+            self?.emitter.birthRate = 0
+        }
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // Keep the emitter sized and positioned relative to the current view bounds.
+        emitter.frame = bounds
+        emitter.emitterPosition = CGPoint(x: bounds.midX, y: -10)
+        emitter.emitterSize = CGSize(width: bounds.width, height: 1)
+    }
+}
+
+struct ConfettiView: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        ConfettiContainerView()
     }
     func updateUIView(_ uiView: UIView, context: Context) {}
 }
@@ -485,7 +508,7 @@ struct TeamPill: View {
                 FlagView(flagAsset: flagAsset)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(code == "UNK" ? "—" : code).font(.fwcBlack(14)).foregroundColor(.black)
-                    if let name { Text(name).font(.fwcRegular(11)).foregroundColor(.secondary) }
+                    
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "checkmark.circle").font(.caption).opacity(0.8)
@@ -494,7 +517,7 @@ struct TeamPill: View {
                 Spacer(minLength: 0)
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(code == "UNK" ? "—" : code).font(.fwcBlack(14)).foregroundColor(.black)
-                    if let name { Text(name).font(.fwcRegular(11)).foregroundColor(.secondary) }
+                   
                 }
                 FlagView(flagAsset: flagAsset)
             }
@@ -671,7 +694,7 @@ struct PartidosPorFechaView: View {
                             .datePickerStyle(.graphical)
                             .labelsHidden()
                             .environment(\.locale, Locale(identifier: "es_MX"))
-                            .onChange(of: vm.selectedDate) { _ in vm.filterForSelectedDate() }
+                            .onChange(of: vm.selectedDate) { vm.filterForSelectedDate() }
 
                             HStack {
                                 Spacer()
@@ -731,21 +754,21 @@ struct PartidosPorFechaView: View {
                         .accessibilityHidden(true)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink(destination: RankingView(), isActive: $goRanking) {
-                        Button {
-                            goRanking = true
-                        } label: {
-                            Image(systemName: "trophy.fill")
-                                .font(.title3)
-                                .foregroundColor(.primary)
-                                .padding(8)
-                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.glassStroke, lineWidth: 1))
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Ranking")
+                    Button {
+                        goRanking = true
+                    } label: {
+                        Image(systemName: "trophy.fill")
+                            .font(.title3)
+                            .foregroundColor(.primary)
+                            .padding(8)
+                            .glassEffect()
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Ranking")
                 }
+            }
+            .navigationDestination(isPresented: $goRanking) {
+                RankingView()
             }
         }
         .onAppear { vm.filterForSelectedDate() }

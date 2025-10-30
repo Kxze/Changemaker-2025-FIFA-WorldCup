@@ -10,8 +10,8 @@ import SwiftUI
 // Estado
 enum RankingTab { case global, friends }
 
-//  Modelo
-struct Player: Identifiable, Hashable {
+//  Modelo específico del Ranking (renombrado para evitar conflicto con Stats.Player)
+struct RankingPlayer: Identifiable, Hashable {
     let id = UUID()
     let rank: Int
     let name: String
@@ -27,38 +27,38 @@ struct RankingView: View {
     //
     private let currentUserName: String = "Alex"
 
-    // ====== 
-    private var globalPlayers: [Player] = [
-           .init(rank: 1560,  name: "Erick",    points: 100, flagAsset: "Noruega"),     // escandinavo
-           .init(rank: 1561,  name: "Adriana",  points: 90,  flagAsset: "Spain"),       // España / LatAm
-           .init(rank: 1562,  name: "Tania",    points: 80,  flagAsset: "Ucrania"),     // eslavo
-           .init(rank: 1563,  name: "Josepe",   points: 79,  flagAsset: "mex"),         // México / hispano
-           .init(rank: 1564,  name: "Alex",     points: 69,  flagAsset: "USA"),         // uso global / EUA
-           .init(rank: 1565,  name: "Gerard",   points: 68,  flagAsset: "France"),      // Gérard (Francia)
-           .init(rank: 1566,  name: "Eduard",   points: 67,  flagAsset: "Ucrania"),     // Europa del este
-           .init(rank: 1567,  name: "Antoine",  points: 65,  flagAsset: "France"),      // Francia
-           .init(rank: 1568,  name: "Liang",    points: 64,  flagAsset: "japon"),       // Asia oriental (≈)
-           .init(rank: 1569, name: "Mei 美",   points: 63,  flagAsset: "corea"),       // Asia oriental (≈)
-           .init(rank: 1570, name: "Santiago", points: 62,  flagAsset: "arg"),         // Argentina / hispano
-           .init(rank: 1571, name: "Luca",     points: 61,  flagAsset: "italia"),      // Italia
-           .init(rank: 1572, name: "Noah",     points: 60,  flagAsset: "USA"),         // EUA / Europa
-           .init(rank: 1573, name: "Aisha",    points: 59,  flagAsset: "egipto"),      // mundo árabe / Egipto
-           .init(rank: 1574, name: "Yuri",     points: 58,  flagAsset: "Serbia"),      // eslavo (≈)
-           .init(rank: 1575, name: "Lea",      points: 57,  flagAsset: "German.svg"),  // Alemania
-           .init(rank: 1576, name: "Inés",     points: 56,  flagAsset: "Spain"),       // España
-           .init(rank: 1560, name: "Tom",      points: 55,  flagAsset: "Ing"),         // Inglaterra
-           .init(rank: 1577, name: "João",     points: 54,  flagAsset: "Por"),         // Portugal
-           .init(rank: 1578, name: "Khalid",   points: 53,  flagAsset: "arabia")       // Arabia Saudita
-       ]
+    // ======
+    private var globalPlayers: [RankingPlayer] = [
+        .init(rank: 1560, name: "Erick",    points: 100, flagAsset: "Noruega"),     // escandinavo
+        .init(rank: 1561, name: "Adriana",  points: 90,  flagAsset: "Spain"),       // España / LatAm
+        .init(rank: 1562, name: "Tania",    points: 80,  flagAsset: "Ucrania"),     // eslavo
+        .init(rank: 1563, name: "Josepe",   points: 79,  flagAsset: "mex"),         // México / hispano
+        .init(rank: 1564, name: "Alex",     points: 69,  flagAsset: "USA"),         // uso global / EUA
+        .init(rank: 1565, name: "Gerard",   points: 68,  flagAsset: "France"),      // Gérard (Francia)
+        .init(rank: 1566, name: "Eduard",   points: 67,  flagAsset: "Ucrania"),     // Europa del este
+        .init(rank: 1567, name: "Antoine",  points: 65,  flagAsset: "France"),      // Francia
+        .init(rank: 1568, name: "Liang",    points: 64,  flagAsset: "japon"),       // Asia oriental (≈)
+        .init(rank: 1569, name: "Mei 美",   points: 63,  flagAsset: "corea"),       // Asia oriental (≈)
+        .init(rank: 1570, name: "Santiago", points: 62,  flagAsset: "arg"),         // Argentina / hispano
+        .init(rank: 1571, name: "Luca",     points: 61,  flagAsset: "italia"),      // Italia
+        .init(rank: 1572, name: "Noah",     points: 60,  flagAsset: "USA"),         // EUA / Europa
+        .init(rank: 1573, name: "Aisha",    points: 59,  flagAsset: "egipto"),      // mundo árabe / Egipto
+        .init(rank: 1574, name: "Yuri",     points: 58,  flagAsset: "Serbia"),      // eslavo (≈)
+        .init(rank: 1575, name: "Lea",      points: 57,  flagAsset: "German.svg"),  // Alemania
+        .init(rank: 1576, name: "Inés",     points: 56,  flagAsset: "Spain"),       // España
+        .init(rank: 1560, name: "Tom",      points: 55,  flagAsset: "Ing"),         // Inglaterra
+        .init(rank: 1577, name: "João",     points: 54,  flagAsset: "Por"),         // Portugal
+        .init(rank: 1578, name: "Khalid",   points: 53,  flagAsset: "arabia")       // Arabia Saudita
+    ]
 
-    private var friendsPlayers: [Player] = [
-        .init(rank: 4,  name: "Angel",    points: 70, flagAsset: nil),
-        .init(rank: 5,  name: "Alex",     points: 69, flagAsset: nil),
-        .init(rank: 6,  name: "Diego", points: 68, flagAsset: nil),
-        .init(rank: 7,  name: "Sol",      points: 67, flagAsset: nil),
-        .init(rank: 8,  name: "Gigi",     points: 66, flagAsset: nil),
-        .init(rank: 10, name: "Pau",      points: 64, flagAsset: nil),
-        .init(rank: 11, name: "Sandra",   points: 63, flagAsset: nil),
+    private var friendsPlayers: [RankingPlayer] = [
+        .init(rank: 4,  name: "Angel",  points: 70, flagAsset: nil),
+        .init(rank: 5,  name: "Alex",   points: 69, flagAsset: nil),
+        .init(rank: 6,  name: "Diego",  points: 68, flagAsset: nil),
+        .init(rank: 7,  name: "Sol",    points: 67, flagAsset: nil),
+        .init(rank: 8,  name: "Gigi",   points: 66, flagAsset: nil),
+        .init(rank: 10, name: "Pau",    points: 64, flagAsset: nil),
+        .init(rank: 11, name: "Sandra", points: 63, flagAsset: nil),
     ]
     // ==============================================
 
@@ -66,7 +66,6 @@ struct RankingView: View {
         ZStack { Color.white.ignoresSafeArea()
             VStack(spacing: 0) {
 
-              
                 VStack(spacing: 10) {
                     header
                         .padding(.top, 6)
@@ -156,9 +155,6 @@ struct RankingView: View {
     }
 }
 
-
-
-
 struct TopThreeMedals: View {
     let centerScore: Int
     let leftScore: Int
@@ -202,21 +198,17 @@ struct MedalBubble: View {
     }
 }
 
-
-
 struct PlayerRow: View {
-    let player: Player
+    let player: RankingPlayer
     let showFlag: Bool
     let isCurrentUser: Bool
 
-  
     private let rankColWidth: CGFloat = 58
     private let flagBoxWidth: CGFloat = 30
     private let pointsColWidth: CGFloat = 44
 
     var body: some View {
         HStack(spacing: 12) {
-           
             Text(formatRank(player.rank))
                 .font(.fwcBlack(16))
                 .foregroundColor(.black.opacity(0.22))
@@ -226,14 +218,12 @@ struct PlayerRow: View {
                 .minimumScaleFactor(0.85)
                 .frame(width: rankColWidth, alignment: .leading)
 
-         
             Text(player.name)
                 .font(.fwcRegular(15))
                 .foregroundColor(.black.opacity(isCurrentUser ? 0.95 : 0.6))
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-           
             Group {
                 if showFlag, let asset = player.flagAsset {
                     Image(asset)
@@ -244,7 +234,6 @@ struct PlayerRow: View {
                         .overlay(Circle().stroke(Color.white.opacity(0.6), lineWidth: 0.8))
                         .frame(width: flagBoxWidth, height: 28, alignment: .center)
                 } else {
-                   
                     Color.clear.frame(width: flagBoxWidth, height: 28)
                 }
             }
@@ -274,7 +263,6 @@ struct PlayerRow: View {
         .opacity(isCurrentUser ? 1 : 0.9)
     }
 
-    ///
     private func formatRank(_ n: Int) -> String {
         let fmt = NumberFormatter()
         fmt.numberStyle = .decimal
@@ -284,9 +272,6 @@ struct PlayerRow: View {
     }
 }
 
-
-
-//
 struct GlassIcon: View {
     var system: String
     var action: () -> Void
@@ -312,11 +297,6 @@ struct GlassIcon: View {
     }
 }
 
-
-
-            
 #Preview {
-                RankingView()
-            }
-        
-
+    RankingView()
+}

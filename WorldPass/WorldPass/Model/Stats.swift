@@ -17,10 +17,29 @@ enum PlayerPosition: String, Codable, Hashable {
 }
 
 struct Player: Identifiable, Codable, Hashable {
-    let id = UUID()
+    let id: UUID
     let name: String
     let number: Int
     let position: PlayerPosition
+
+    init(id: UUID = UUID(), name: String, number: Int, position: PlayerPosition) {
+        self.id = id
+        self.name = name
+        self.number = number
+        self.position = position
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, number, position
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        self.name = try container.decode(String.self, forKey: .name)
+        self.number = try container.decode(Int.self, forKey: .number)
+        self.position = try container.decode(PlayerPosition.self, forKey: .position)
+    }
 }
 
 struct Lineup: Identifiable, Hashable {
@@ -39,7 +58,7 @@ extension Lineup: Codable {
         case players
     }
 
-    public func encode(to encoder: Encoder) throws {
+    func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(team.name, forKey: .teamCode)
@@ -47,7 +66,7 @@ extension Lineup: Codable {
         try container.encode(players, forKey: .players)
     }
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let id = try container.decode(UUID.self, forKey: .id)
         let teamCode = try container.decode(String.self, forKey: .teamCode)

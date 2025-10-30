@@ -105,14 +105,9 @@ struct MatchesView: View {
         }
     }
     
-    // Partidos finalizados: tomamos 2 de la lista y simulamos marcador con MatchSimulator
-    private var partidosFinalizados: [(partido: Partido, grupo: String, local: Int, visitante: Int)] {
-        let base = todosLosPartidos.shuffled()
-        let seleccion = Array(base.prefix(2))
-        return seleccion.map { item in
-            let stats = MatchSimulator.simulate(partido: item.partido)
-            return (partido: item.partido, grupo: item.grupo, local: stats.local.goals, visitante: stats.visitante.goals)
-        }
+    // Partidos finalizados conectados a StatsView: usamos los primeros 2 del caché compartido
+    private var finalizadosItems: [(partido: Partido, grupo: String, stats: MatchStats)] {
+        Array(FinishedMatchesCache.items.prefix(2))
     }
     
     // Próximos: 2 partidos con fecha/hora ficticia
@@ -228,8 +223,8 @@ struct MatchesView: View {
                     .scrollTargetLayout()
                 }
                 
-                // Sección Finalizados (2 cards)
-                if !partidosFinalizados.isEmpty {
+                // Sección Finalizados (2 cards) — conectada a StatsView
+                if !finalizadosItems.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 120){
                         Text("FINALIZADOS")
@@ -245,15 +240,20 @@ struct MatchesView: View {
                         }
                         
                         VStack(spacing: 16) {
-                            ForEach(Array(partidosFinalizados.enumerated()), id: \.offset) { _, item in
-                                CardFinalizado(
-                                    partido: item.partido,
-                                    grupo: item.grupo,
-                                    marcadorLocal: item.local,
-                                    marcadorVisitante: item.visitante
-                                )
-                                .frame(maxWidth: .infinity)
-                                .padding(.horizontal, 20)
+                            ForEach(Array(finalizadosItems.enumerated()), id: \.offset) { idx, item in
+                                NavigationLink {
+                                    StatsView(initialIndex: idx)
+                                } label: {
+                                    CardFinalizado(
+                                        partido: item.partido,
+                                        grupo: item.grupo,
+                                        marcadorLocal: item.stats.local.goals,
+                                        marcadorVisitante: item.stats.visitante.goals
+                                    )
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.horizontal, 20)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }

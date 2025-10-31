@@ -253,12 +253,11 @@ private struct StadiumSeatGuideVectorView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
 
-                // TÍTULOS EN NEGRO (solo cambio de color aquí)
+                // TÍTULOS EN NEGRO
                 VStack(spacing: 6) {
                     Text(estadio.uppercased())
                         .font(.custom("FWC2026-NormalBlack", size: 28))
                         .foregroundStyle(.black)
-                        .shadow(radius: 0) // limpio para negro
                     Text("\(duelo)  •  \(fecha)  •  \(hora)")
                         .font(.custom("FWC2026-NormalRegular", size: 13))
                         .foregroundStyle(.black.opacity(0.75))
@@ -271,11 +270,9 @@ private struct StadiumSeatGuideVectorView: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
 
-                // Strip de zonas (deja visible cuál está seleccionada abajo)
                 ZonesStrip(active: zone)
                     .padding(.horizontal, 16)
 
-                // Carrusel de datos
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         dataChip("PISO", ticket.piso)
@@ -396,7 +393,7 @@ private struct BarcodeStub: View {
     }
 }
 
-// MARK: - Estadio racetrack con zonas y callout glass animado
+// MARK: - Estadio racetrack con texturas + callout glass
 private struct RacetrackStadiumBackdrop: View {
     var highlightSector: Int? = nil        // 0..23
     var seatText: String? = nil            // número de asiento
@@ -428,29 +425,40 @@ private struct RacetrackStadiumBackdrop: View {
 
                 // Gradas (tres zonas)
                 let ring1 = CGSize(width: fieldW + gap*2 + ringThickness*2,
-                                   height: fieldH + gap*2 + ringThickness*2)
+                                   height: fieldH + gap*2 + ringThickness*2)      // Baja
                 let ring2 = CGSize(width: ring1.width + gap*2 + ringThickness*2,
-                                   height: ring1.height + gap*2 + ringThickness*2)
+                                   height: ring1.height + gap*2 + ringThickness*2) // Media
                 let ring3 = CGSize(width: ring2.width + gap*2 + ringThickness*2,
-                                   height: ring2.height + gap*2 + ringThickness*2)
+                                   height: ring2.height + gap*2 + ringThickness*2) // Alta
 
-                // Colores por zona
-                let cBaja  = Color(hue: 0.59, saturation: 0.45, brightness: 0.78).opacity(0.92)
-                let cMedia = Color(hue: 0.76, saturation: 0.35, brightness: 0.78).opacity(0.92)
-                let cAlta  = Color(hue: 0.36, saturation: 0.52, brightness: 0.72).opacity(0.92)
+                // --- TEXTURAS: tus assets como ImagePaint (se repiten en mosaico) ---
+                let texBaja  = texturePaint(named: "FondoAzul",   for: ring1)
+                let texMedia = texturePaint(named: "FondoMorado", for: ring2)
+                let texAlta  = texturePaint(named: "FondoVerde",  for: ring3)
+                //let texVIP   = texturePaint(named: "FondoRojo",   for: CGSize(width: fieldW + 26, height: fieldH + 26))
 
-                // Anillos SIEMPRE visibles
+                // Anillos con textura + línea blanca suave
                 RacetrackRing(size: ring3, thickness: ringThickness)
-                    .fill(cAlta, style: FillStyle(eoFill: true))
-                    .overlay(RacetrackRing(size: ring3, thickness: ringThickness).stroke(.white.opacity(0.18), lineWidth: 1))
-                RacetrackRing(size: ring2, thickness: ringThickness)
-                    .fill(cMedia, style: FillStyle(eoFill: true))
-                    .overlay(RacetrackRing(size: ring2, thickness: ringThickness).stroke(.white.opacity(0.18), lineWidth: 1))
-                RacetrackRing(size: ring1, thickness: ringThickness)
-                    .fill(cBaja, style: FillStyle(eoFill: true))
-                    .overlay(RacetrackRing(size: ring1, thickness: ringThickness).stroke(.white.opacity(0.22), lineWidth: 1))
+                    .fill(texAlta, style: FillStyle(eoFill: true))
+                    .overlay(RacetrackRing(size: ring3, thickness: ringThickness).stroke(.white.opacity(0.15), lineWidth: 1))
 
-                // SOLO mostrar la etiqueta de la zona seleccionada (no las tres)
+                RacetrackRing(size: ring2, thickness: ringThickness)
+                    .fill(texMedia, style: FillStyle(eoFill: true))
+                    .overlay(RacetrackRing(size: ring2, thickness: ringThickness).stroke(.white.opacity(0.16), lineWidth: 1))
+
+                RacetrackRing(size: ring1, thickness: ringThickness)
+                    .fill(texBaja, style: FillStyle(eoFill: true))
+                    .overlay(RacetrackRing(size: ring1, thickness: ringThickness).stroke(.white.opacity(0.18), lineWidth: 1))
+
+                /* (Opcional) Anillo VIP muy fino en rojo cerca del campo
+                RoundedRectangle(cornerRadius: min(fieldW, fieldH)*0.20, style: .continuous)
+                    //.strokeBorder(texVIP, lineWidth: 8)
+                    .frame(width: fieldW + 20, height: fieldH + 20)
+                    .opacity(0.9)
+                 
+                 */
+
+                // Sólo la etiqueta de la zona seleccionada
                 switch zone {
                 case .alta:
                     ZoneRingLabel(size: ring3, thickness: ringThickness, color: .clear, text: "Zona Alta", showLabel: true)
@@ -496,6 +504,15 @@ private struct RacetrackStadiumBackdrop: View {
         }
     }
 
+    // Crea un ImagePaint escalado para que el patrón no se deforme
+    private func texturePaint(named name: String, for size: CGSize) -> ImagePaint {
+        // escala heurística: mayor anillo → mayor escala (patrón más grande)
+        // ajusta si quieres el patrón más chico/grande
+        let longest = max(size.width, size.height)
+        let scale = max(1.0, longest / 260.0)
+        return ImagePaint(image: Image(name), scale: scale)
+    }
+
     private func pointOnRacetrack(size: CGSize, angle: Double, fraction: CGFloat, thickness: CGFloat) -> CGPoint {
         let outerRx = size.width / 2
         let outerRy = size.height / 2
@@ -507,7 +524,7 @@ private struct RacetrackStadiumBackdrop: View {
     }
 }
 
-// View auxiliar para etiqueta glass (puede ocultar el relleno del anillo)
+// Etiqueta glass de zona (solo texto)
 private struct ZoneRingLabel: View {
     var size: CGSize
     var thickness: CGFloat
@@ -516,28 +533,26 @@ private struct ZoneRingLabel: View {
     var showLabel: Bool = true
 
     var body: some View {
-        ZStack {
-            // El anillo aquí no se pinta (color .clear) porque ya lo dibujamos arriba;
-            // se deja por compatibilidad de layout si lo necesitas en el futuro.
-            if color != .clear {
-                RacetrackRing(size: size, thickness: thickness)
-                    .fill(color, style: FillStyle(eoFill: true))
-            }
-            if showLabel {
-                Text(text)
-                    .font(.custom("FWC2026-NormalBlack", size: 12))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(.ultraThinMaterial, in: Capsule())
-                    .overlay(Capsule().stroke(.black.opacity(0.08), lineWidth: 0.5))
-                    .offset(x: -size.width*0.32, y: -size.height*0.36)
-            }
+        if showLabel {
+            Text(text)
+                .font(.custom("FWC2026-NormalBlack", size: 12))
+                .foregroundStyle(.black)
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: Capsule())
+                .overlay(Capsule().stroke(.black.opacity(0.08), lineWidth: 0.5))
+                .offset(x: -size.width*0.32, y: -size.height*0.36)
         }
     }
 }
 
 // Pin glass con “colita”
 private struct GlassLocator: View {
+    var text: String
+    var body: some View {
+        ZstackWithTail(text: text)
+    }
+}
+private struct ZstackWithTail: View {
     var text: String
     var body: some View {
         ZStack(alignment: .bottom) {

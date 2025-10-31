@@ -76,6 +76,17 @@ struct WalletView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+        
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        ExpensesRootView()
+                    } label: {
+                        Image(systemName: "person.3.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            
+            
             ToolbarItem(placement: .title) {
                 Text("WALLET")
                     .font(.custom("FWC2026-NormalBlack", size: 20))

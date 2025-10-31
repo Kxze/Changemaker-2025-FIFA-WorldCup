@@ -100,6 +100,7 @@ struct ExpensesRootView: View {
                 .toolbar {
                     // ← Botón Atrás (superior izquierdo)
                     ToolbarItem(placement: .navigationBarLeading) {
+                        /*
                         Button {
                             dismiss()
                         } label: {
@@ -108,7 +109,7 @@ struct ExpensesRootView: View {
                                     .symbolRenderingMode(.monochrome)
                             }
                             .foregroundStyle(.black)
-                        }
+                        }*/
                     }
                     // Título centrado
                     ToolbarItem(placement: .principal) {

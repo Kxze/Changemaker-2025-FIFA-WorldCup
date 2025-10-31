@@ -5,14 +5,10 @@
 //  Created by Pau Pau on 21/10/25.
 //
 
-//
-//  ChatbotFlowView.swift
-//
-
 import SwiftUI
 import Foundation
 
-//
+
 enum GeminiError: LocalizedError {
     case missingAPIKey
     case httpError(Int, String)
@@ -33,41 +29,18 @@ enum GeminiError: LocalizedError {
     }
 }
 
-struct GeminiRequest: Encodable {
-    let contents: [GeminiContent]
-}
-struct GeminiContent: Encodable {
-    let role: String
-    let parts: [GeminiPart]
-}
-struct GeminiPart: Encodable {
-    let text: String
-}
+struct GeminiRequest: Encodable { let contents: [GeminiContent] }
+struct GeminiContent: Encodable { let role: String; let parts: [GeminiPart] }
+struct GeminiPart: Encodable { let text: String }
 
-struct GeminiResponse: Decodable {
-    let candidates: [GeminiCandidate]?
-    let promptFeedback: GeminiPromptFeedback?
-}
-struct GeminiCandidate: Decodable {
-    let content: GeminiContentResponse?
-    let finishReason: String?
-}
-struct GeminiContentResponse: Decodable {
-    let parts: [GeminiPartResponse]?
-}
-struct GeminiPartResponse: Decodable {
-    let text: String?
-}
-struct GeminiPromptFeedback: Decodable {
-    let safetyRatings: [GeminiSafety]?
-}
-struct GeminiSafety: Decodable {
-    let category: String?
-    let probability: String?
-}
+struct GeminiResponse: Decodable { let candidates: [GeminiCandidate]?; let promptFeedback: GeminiPromptFeedback? }
+struct GeminiCandidate: Decodable { let content: GeminiContentResponse?; let finishReason: String? }
+struct GeminiContentResponse: Decodable { let parts: [GeminiPartResponse]? }
+struct GeminiPartResponse: Decodable { let text: String? }
+struct GeminiPromptFeedback: Decodable { let safetyRatings: [GeminiSafety]? }
+struct GeminiSafety: Decodable { let category: String?; let probability: String? }
 
 struct GeminiClient {
-    // modelo de gemini
     let model: String = "gemini-2.5-flash"
 
     private func resolveAPIKey() -> String? {
@@ -84,19 +57,13 @@ struct GeminiClient {
     }
 
     func generate(_ userText: String) async throws -> String {
-        guard let apiKey = resolveAPIKey(), !apiKey.isEmpty else {
-            throw GeminiError.missingAPIKey
-        }
+        guard let apiKey = resolveAPIKey(), !apiKey.isEmpty else { throw GeminiError.missingAPIKey }
 
-        var comps = URLComponents(
-            string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
-        )!
+        var comps = URLComponents(string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent")!
         comps.queryItems = [URLQueryItem(name: "key", value: apiKey)]
         let url = comps.url!
 
-        let payload = GeminiRequest(
-            contents: [GeminiContent(role: "user", parts: [GeminiPart(text: userText)])]
-        )
+        let payload = GeminiRequest(contents: [GeminiContent(role: "user", parts: [GeminiPart(text: userText)])])
 
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
@@ -105,9 +72,7 @@ struct GeminiClient {
 
         let (data, response) = try await URLSession.shared.data(for: req)
 
-        guard let http = response as? HTTPURLResponse else {
-            throw GeminiError.httpError(-1, "Respuesta no HTTP")
-        }
+        guard let http = response as? HTTPURLResponse else { throw GeminiError.httpError(-1, "Respuesta no HTTP") }
         guard (200..<300).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? "<sin cuerpo>"
             throw GeminiError.httpError(http.statusCode, body)
@@ -124,16 +89,11 @@ struct GeminiClient {
     }
 }
 
-//
-
+//  Estilos
 
 extension Font {
-    static func fwcTitle(_ size: CGFloat) -> Font {
-        .custom("FWC2026-NormalBlack", size: size)
-    }
-    static func fwcText(_ size: CGFloat) -> Font {
-        .custom("FWC2026-NormalRegular", size: size)
-    }
+    static func fwcTitle(_ size: CGFloat) -> Font { .custom("FWC2026-NormalBlack", size: size) }
+    static func fwcText(_ size: CGFloat) -> Font { .custom("FWC2026-NormalRegular", size: size) }
 }
 
 private extension Color {
@@ -142,11 +102,15 @@ private extension Color {
     static let bubbleStroke = Color.white.opacity(0.7)
 }
 
+//
+
 struct ChatbotFlowView: View {
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         NavigationStack {
-            ZayuIntroView()
-                .navigationBarHidden(true)
+          
+            ZayuIntroView(onClose: { dismiss() })
         }
         .environment(\.font, .custom("FWC2026-NormalRegular", size: 16))
     }
@@ -154,80 +118,72 @@ struct ChatbotFlowView: View {
 
 
 struct ZayuIntroView: View {
+    @Environment(\.dismiss) private var dismiss
+    var onClose: (() -> Void)? = nil
+
     var body: some View {
-        NavigationStack {
-            
-            
-            ZStack {
-                Image("FondoVerde")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-                
-                VStack {
-                    HStack {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.95))
-                            .frame(width: 34, height: 34)
-                            .background(Color.white.opacity(0.18))
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
-                            .opacity(0)
-                        
-                        //
-                        Spacer()
-                    }
-                    
-                    .hidden()
-    
+        ZStack {
+            Image("FondoVerde")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
-            
-
-                    Spacer(minLength: 8)
-                    
-                    Text("¡HOLA,\nSOY ZAYU!")
-                        .multilineTextAlignment(.center)
-                        .font(.fwcTitle(44))
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
-                        .padding(.bottom, 8)
-                    
-                    Image("Zayu")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: 260)
-                        .padding(.vertical, 6)
-                    
-                    Spacer()
-                    
-                    Text("¿Cómo puedo ayudarte?")
-                        .font(.fwcText(18))
-                        .foregroundStyle(.white.opacity(0.95))
-                        .padding(.bottom, 8)
-                    
-                    NavigationLink {
-                        IAPrediccionesView()
-                            .navigationBarBackButtonHidden(true)
-                    } label: {
-                        Text("Comenzar")
-                            .font(.fwcTitle(17))
-                            .foregroundStyle(.black)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(
-                                Capsule()
-                                    .fill(.white)
-                                    .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
-                            )
-                    }
-                    .padding(.bottom, 28)
+            VStack {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.black)
+                        .frame(width: 34, height: 34)
+                        .background(.white)
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
                 }
+                .hidden()
+
+                Spacer(minLength: 8)
+
+                Text("¡HOLA,\nSOY ZAYU!")
+                    .multilineTextAlignment(.center)
+                    .font(.fwcTitle(44))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                    .padding(.bottom, 8)
+
+                Image("Zayu")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: 260)
+                    .padding(.vertical, 6)
+
+                Spacer()
+
+                Text("¿Cómo puedo ayudarte?")
+                    .font(.fwcText(18))
+                    .foregroundStyle(.white.opacity(0.95))
+                    .padding(.bottom, 8)
+
+                NavigationLink {
+                    
+                    IAPrediccionesView(onClose: onClose)
+                        .navigationBarBackButtonHidden(true)
+                } label: {
+                    Text("Comenzar")
+                        .font(.fwcTitle(17))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(
+                            Capsule()
+                                .fill(.white)
+                                .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+                        )
+                }
+                .padding(.bottom, 28)
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
-
 
 
 struct Message: Identifiable, Codable, Equatable {
@@ -251,18 +207,13 @@ private enum ChatPersistence {
         do {
             let data = try JSONEncoder().encode(messages)
             UserDefaults.standard.set(data, forKey: key)
-        } catch {
-            
-        }
+        } catch { }
     }
 
     static func load() -> [Message]? {
         guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
-        do {
-            return try JSONDecoder().decode([Message].self, from: data)
-        } catch {
-            return nil
-        }
+        do { return try JSONDecoder().decode([Message].self, from: data) }
+        catch { return nil }
     }
 
     static func clear() {
@@ -270,11 +221,13 @@ private enum ChatPersistence {
     }
 }
 
+
 struct IAPrediccionesView: View {
     @Environment(\.dismiss) private var dismiss
+    var onClose: (() -> Void)? = nil
 
     @State private var messages: [Message] = ChatPersistence.load()
-    ?? [Message(text: "¡Hola! Soy Zayu 🐆\n¿Cómo puedo ayudarte hoy?", isUser: false)]
+        ?? [Message(text: "¡Hola! Soy Zayu \n¿Cómo puedo ayudarte hoy?", isUser: false)]
 
     @State private var currentMessage: String = ""
     @State private var isLoading = false
@@ -319,17 +272,18 @@ struct IAPrediccionesView: View {
                 .overlay(Divider(), alignment: .top)
         }
         .onTapGesture { isFieldFocused = false }
-        .onChange(of: messages) { _, newValue in
-            ChatPersistence.save(newValue)
-            
-            // guarda cada cambio del historial
-        }
+        .onChange(of: messages) { _, newValue in ChatPersistence.save(newValue) }
+        // Ocultamos la barra SOLO en el chat
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     // Header
     private var topBar: some View {
         HStack(spacing: 12) {
-            NavigationLink(destination: MainView()) {
+            //
+            Button {
+                onClose?() ?? dismiss() //
+            } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.black)
@@ -338,7 +292,6 @@ struct IAPrediccionesView: View {
                     .clipShape(Circle())
                     .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
             }
-
 
             Spacer(minLength: 4)
 
@@ -356,7 +309,7 @@ struct IAPrediccionesView: View {
         .overlay(Divider(), alignment: .bottom)
     }
 
-    
+    // Composer
     private var composer: some View {
         HStack(spacing: 10) {
             TextField("Pregunta a Zayu", text: $currentMessage, axis: .vertical)
@@ -392,7 +345,7 @@ struct IAPrediccionesView: View {
         messages.append(Message(text: userText, isUser: true))
         currentMessage = ""
         isLoading = true
-        ChatPersistence.save(messages) // guarda tras enviar
+        ChatPersistence.save(messages)
 
         Task {
             if let response = await fetchGeminiResponse(for: userText) {
@@ -402,20 +355,14 @@ struct IAPrediccionesView: View {
             }
             isLoading = false
             ChatPersistence.save(messages)
-            
-            // guarda chat
         }
     }
 
-   
     private func fetchGeminiResponse(for text: String) async -> String? {
         let client = GeminiClient()
         let briefInstruction = "Responde de forma breve, clara y directa. Máximo 2 oraciones. "
         do {
             let reply = try await client.generate(briefInstruction + text)
-            // Filtro de caracteres en gemini
-            
-            
             let maxChars = 280
             if reply.count > maxChars {
                 if let lastSpace = reply.prefix(maxChars).lastIndex(of: " ") {
@@ -429,8 +376,7 @@ struct IAPrediccionesView: View {
         }
     }
 
-
-    // Burbujas de perfil
+    // Burbujas
     private struct ChatBubble: View {
         let message: Message
         let containerWidth: CGFloat
@@ -441,14 +387,8 @@ struct IAPrediccionesView: View {
                     Spacer(minLength: 36)
 
                     bubble
-                        .background(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(Color.bubbleUser)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .stroke(Color.bubbleStroke, lineWidth: 0.7)
-                        )
+                        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.bubbleUser))
+                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.bubbleStroke, lineWidth: 0.7))
                         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
 
                     Circle()
@@ -471,14 +411,8 @@ struct IAPrediccionesView: View {
                         .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
 
                     bubble
-                        .background(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(Color.bubbleBot)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .stroke(Color.bubbleStroke, lineWidth: 0.7)
-                        )
+                        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.bubbleBot))
+                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.bubbleStroke, lineWidth: 0.7))
                         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
 
                     Spacer(minLength: 36)
@@ -522,8 +456,7 @@ struct IAPrediccionesView: View {
                         }
                         .foregroundStyle(.black.opacity(0.5))
                         .offset(y: sin(phase) * 2)
-                        .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true),
-                                   value: phase)
+                        .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: phase)
                     )
                     .onAppear { phase = .pi / 2 }
 
@@ -532,6 +465,8 @@ struct IAPrediccionesView: View {
         }
     }
 }
+
+
 
 #Preview {
     ChatbotFlowView()

@@ -55,115 +55,120 @@ struct MainView: View {
 
     // Body
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
 
-                // PRÓXIMOS EVENTOS
-                VStack {
-                    HStack {
-                        Text("PRÓXIMOS EVENTOS")
-                        Spacer()
-                    }
-                    .padding(.horizontal, 20)
-                    .font(.fwcBlack(20))
-
-                    CardEventos()
-                }
-
-                // ¡HOLA, SOY ZAYU!
-                ZayuSection(hora: horaSugerida, probLluvia: probLluvia) {
-                    showChatbotFullScreen = true
-                }
-                .padding(.top, 4)
-
-                // HOY EN VIVO
-                if !partidosEnVivo.isEmpty {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("HOY")
-                            .font(.fwcBlack(20))
+                    // PRÓXIMOS EVENTOS
+                    VStack {
                         HStack {
-                            Image(systemName: "circle.fill")
-                                .foregroundStyle(.red)
-                                .glassEffect()
-                            Text("EN VIVO")
-                                .font(.fwcRegular(15))
+                            Text("PRÓXIMOS EVENTOS")
+                            Spacer()
                         }
-                    }
-                    .padding(.horizontal, 20)
+                        .padding(.horizontal, 20)
+                        .font(.fwcBlack(20))
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .center, spacing: 50) {
-                            ForEach(Array(partidosEnVivo.enumerated()), id: \.offset) { idx, item in
-                                let m = marcadorFicticio(index: idx)
-                                CardEnVivo(
-                                    partido: item.partido,
-                                    grupo: item.grupo,
-                                    marcadorLocal: m.local,
-                                    marcadorVisitante: m.visitante,
-                                    minuto: m.minuto
-                                )
-                                .frame(width: 300)
-                                .scrollTransition(.interactive, axis: .horizontal) { content, phase in
-                                    content
-                                        .scaleEffect(phase.isIdentity ? 1.0 : 0.94)
-                                        .opacity(phase.isIdentity ? 1.0 : 0.85)
-                                }
-                                .zIndex(1)
+                        CardEventos()
+                    }
+
+                    // Chatbot
+                    ZayuSection(hora: horaSugerida, probLluvia: probLluvia) {
+                        showChatbotFullScreen = true
+                    }
+                    .padding(.top, 4)
+
+                    // HOY EN VIVO
+                    if !partidosEnVivo.isEmpty {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("HOY")
+                                .font(.fwcBlack(20))
+                            HStack {
+                                Image(systemName: "circle.fill")
+                                    .foregroundStyle(.red)
+                                    .glassEffect()
+                                Text("EN VIVO")
+                                    .font(.fwcRegular(15))
                             }
                         }
-                        .padding(.horizontal, 40)
-                        .contentShape(Rectangle())
+                        .padding(.horizontal, 20)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(alignment: .center, spacing: 50) {
+                                ForEach(Array(partidosEnVivo.enumerated()), id: \.offset) { idx, item in
+                                    let m = marcadorFicticio(index: idx)
+                                    CardEnVivo(
+                                        partido: item.partido,
+                                        grupo: item.grupo,
+                                        marcadorLocal: m.local,
+                                        marcadorVisitante: m.visitante,
+                                        minuto: m.minuto
+                                    )
+                                    .frame(width: 300)
+                                    .scrollTransition(.interactive, axis: .horizontal) { content, phase in
+                                        content
+                                            .scaleEffect(phase.isIdentity ? 1.0 : 0.94)
+                                            .opacity(phase.isIdentity ? 1.0 : 0.85)
+                                    }
+                                    .zIndex(1)
+                                }
+                            }
+                            .padding(.horizontal, 40)
+                            .contentShape(Rectangle())
+                        }
+                        .scrollClipDisabled(true)
+                        .scrollTargetBehavior(.viewAligned)
+                        .scrollTargetLayout()
+                    } else {
+                        Text("No hay partidos en vivo disponibles")
+                            .font(.fwcRegular(14))
+                            .foregroundColor(.gray)
+                            .padding(.horizontal)
                     }
-                    .scrollClipDisabled(true)
-                    .scrollTargetBehavior(.viewAligned)
-                    .scrollTargetLayout()
-                } else {
-                    Text("No hay partidos en vivo disponibles")
-                        .font(.fwcRegular(14))
-                        .foregroundColor(.gray)
-                        .padding(.horizontal)
+                }
+                .padding(.vertical, 16)
+            }
+            .scrollEdgeEffectStyle(.soft, for: .bottom)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink { Tournament() } label: {
+                        Image(systemName: "globe.americas.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                ToolbarItem(placement: .title) {
+                    Image("logo")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink { ProfileView() } label: {
+                        Image(systemName: "person")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
-            .padding(.vertical, 16)
-        }
-        .scrollEdgeEffectStyle(.soft, for: .bottom)
-        .navigationBarBackButtonHidden(true) //
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                NavigationLink { Tournament() } label: {
-                    Image(systemName: "globe.americas.fill")
-                        .foregroundStyle(.secondary)
+            .overlay(alignment: .bottomTrailing) {
+                Button {
+                    showChatbotFullScreen = true
+                } label: {
+                    Image(systemName: "apple.intelligence")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.gray)
+                        .frame(width: 44, height: 44)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .overlay(Circle().stroke(.white.opacity(0.6), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.15), radius: 10, y: 4)
                 }
+                .padding(.trailing, 26)
+                .padding(.bottom, 18)
             }
-            ToolbarItem(placement: .title) {
-                Image("logo")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink { ProfileView() } label: {
-                    Image(systemName: "person")
-                        .foregroundStyle(.secondary)
-                }
+            .fullScreenCover(isPresented: $showChatbotFullScreen) {
+                ChatbotFlowView()
+                    .ignoresSafeArea()
             }
         }
-        .overlay(alignment: .bottomTrailing) {
-            Button {
-                showChatbotFullScreen = true
-            } label: {
-                Image(systemName: "apple.intelligence")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.gray)
-                    .frame(width: 44, height: 44)
-                    .background(.ultraThinMaterial, in: Circle())
-                    .overlay(Circle().stroke(.white.opacity(0.6), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.15), radius: 10, y: 4)
-            }
-            .padding(.trailing, 26)
-            .padding(.bottom, 18)
-        }
-        .fullScreenCover(isPresented: $showChatbotFullScreen) {
-            ChatbotFlowView()
-                .ignoresSafeArea()
-        }
+        .toolbar(.visible, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.large)
     }
 }
 
@@ -199,7 +204,6 @@ private struct ZayuSection: View {
                     let zayuW = max(zayuMin, min(zayuMax, min(zayuBase, W * 0.36)))
                     let reserveTrailing = max(96, zayuW - (zayuOverlap + 12))
 
-                    //
                     Circle()
                         .fill(Color.white.opacity(0.92))
                         .frame(width: zayuW * 0.94, height: zayuW * 0.94)
@@ -211,7 +215,6 @@ private struct ZayuSection: View {
                                 .offset(x: (W/2) - (zayuW * 0.35), y: 18)
                         )
 
-                    
                     VStack(alignment: .leading, spacing: 0) {
                         Text(mensaje)
                             .multilineTextAlignment(.leading)
@@ -247,7 +250,7 @@ private struct ZayuSection: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                 }
             }
-            .frame(minHeight: 270) // un poco más alta para textos largos
+            .frame(minHeight: 270)
             .contentShape(RoundedRectangle(cornerRadius: cardCorner, style: .continuous))
             .onTapGesture { onTap?() }
         }
@@ -255,7 +258,6 @@ private struct ZayuSection: View {
         .padding(.bottom, 10)
     }
 
-    // Párrafo con negritas puntuales
     private var mensaje: AttributedString {
         var regular = AttributeContainer()
         regular.font = .custom("FWC2026-NormalRegular", size: 14)

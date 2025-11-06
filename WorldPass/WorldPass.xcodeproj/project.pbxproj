@@ -6,7 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8E231E672EBB0D09000CEC41 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 8E231E662EBB0D09000CEC41 /* Lottie */; };
+		8ED2F1552EBB337100EA3CA6 /* kickoHi.json in Resources */ = {isa = PBXBuildFile; fileRef = 8ED2F1542EBB337100EA3CA6 /* kickoHi.json */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		8ED2F1542EBB337100EA3CA6 /* kickoHi.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = kickoHi.json; sourceTree = "<group>"; };
 		8EDEE77C2E9E124600509869 /* WorldPass.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WorldPass.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -41,15 +47,33 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8E231E672EBB0D09000CEC41 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8E231E682EBB0D2B000CEC41 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				8E231E692EBB0D7C000CEC41 /* Animations */,
+			);
+			path = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		8E231E692EBB0D7C000CEC41 /* Animations */ = {
+			isa = PBXGroup;
+			children = (
+				8ED2F1542EBB337100EA3CA6 /* kickoHi.json */,
+			);
+			path = Animations;
+			sourceTree = "<group>";
+		};
 		8EDEE7732E9E124600509869 = {
 			isa = PBXGroup;
 			children = (
+				8E231E682EBB0D2B000CEC41 /* Supporting Files */,
 				AAB1DBBC2EA444340070F8FA /* Fonts */,
 				8EDEE77E2E9E124600509869 /* WorldPass */,
 				8EDEE77D2E9E124600509869 /* Products */,
@@ -85,6 +109,7 @@
 			);
 			name = WorldPass;
 			packageProductDependencies = (
+				8E231E662EBB0D09000CEC41 /* Lottie */,
 			);
 			productName = WorldPass;
 			productReference = 8EDEE77C2E9E124600509869 /* WorldPass.app */;
@@ -114,6 +139,9 @@
 			);
 			mainGroup = 8EDEE7732E9E124600509869;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8E231E652EBB0D09000CEC41 /* XCRemoteSwiftPackageReference "lottie-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8EDEE77D2E9E124600509869 /* Products */;
 			projectDirPath = "";
@@ -129,6 +157,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8ED2F1552EBB337100EA3CA6 /* kickoHi.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -373,6 +402,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8E231E652EBB0D09000CEC41 /* XCRemoteSwiftPackageReference "lottie-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8E231E662EBB0D09000CEC41 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8E231E652EBB0D09000CEC41 /* XCRemoteSwiftPackageReference "lottie-spm" */;
+			productName = Lottie;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8EDEE7742E9E124600509869 /* Project object */;
 }

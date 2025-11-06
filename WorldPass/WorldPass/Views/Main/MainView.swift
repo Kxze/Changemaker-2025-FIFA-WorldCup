@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Foundation
+import Lottie
 
 struct MainView: View {
 
@@ -189,7 +190,7 @@ private struct ZayuSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("¡HOLA, SOY ZAYU!")
+            Text("¡HOLA, SOY KICKO!")
                 .font(.fwcBlack(titleSize))
                 .foregroundColor(.black)
                 .padding(.horizontal, 2)
@@ -239,15 +240,10 @@ private struct ZayuSection: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                     // Zayu
-                    Image("Zayu")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: zayuW)
-                        .offset(x: -zayuOverlap, y: -6)
-                        .padding(.trailing, innerPad)
-                        .padding(.bottom, innerPad)
-                        .shadow(color: .black.opacity(0.15), radius: 10, y: 6)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    LottieView(animation: .named("kickoHi"))
+                        .playing()
+                        .looping()
+                        .offset(x:100)
                 }
             }
             .frame(minHeight: 270)
@@ -278,4 +274,9 @@ private struct ZayuSection: View {
         var ll = AttributedString("lluvia."); ll.mergeAttributes(bold); s.append(ll)
         return s
     }
+}
+
+#Preview {
+    ContentView()
+        .environmentObject(TabSelection())
 }

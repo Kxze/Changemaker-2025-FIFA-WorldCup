@@ -162,7 +162,7 @@ struct MainView: View {
                 .padding(.trailing, 26)
                 .padding(.bottom, 18)
             }
-            .fullScreenCover(isPresented: $showChatbotFullScreen) {
+            .sheet(isPresented: $showChatbotFullScreen) {
                 ChatbotFlowView()
                     .ignoresSafeArea()
             }

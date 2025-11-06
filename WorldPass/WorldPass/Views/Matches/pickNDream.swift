@@ -6,6 +6,7 @@
 import SwiftUI
 import Combine
 import UIKit
+import Lottie
 
 
 
@@ -284,58 +285,37 @@ private func logEquiposFaltantes() {
 
 //
 final class ConfettiContainerView: UIView {
-    private let emitter = CAEmitterLayer()
+    private let animationView = LottieAnimationView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = .clear
-
-        emitter.emitterShape = .line
-        layer.addSublayer(emitter)
-
-        let shapes: [UIImage] = [
-            UIImage(systemName: "square.fill")!,
-            UIImage(systemName: "circle.fill")!,
-            UIImage(systemName: "triangle.fill")!
-        ]
-        let colors: [UIColor] = [
-            .systemRed, .systemBlue, .systemGreen, .systemOrange,
-            .systemPink, .systemPurple, .systemTeal, .systemYellow
-        ]
-
-        emitter.emitterCells = colors.flatMap { color in
-            shapes.map { shape in
-                let c = CAEmitterCell()
-                c.contents = shape.withTintColor(color, renderingMode: .alwaysOriginal).cgImage
-                c.birthRate = 6
-                c.lifetime = 4
-                c.velocity = 160
-                c.velocityRange = 80
-                c.emissionLongitude = .pi
-                c.emissionRange = .pi/4
-                c.spin = 3.5
-                c.spinRange = 3
-                c.scale = 0.18
-                c.scaleRange = 0.1
-                return c
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) { [weak self] in
-            self?.emitter.birthRate = 0
-        }
+        setup()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+        setup()
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        // Keep the emitter sized and positioned relative to the current view bounds.
-        emitter.frame = bounds
-        emitter.emitterPosition = CGPoint(x: bounds.midX, y: -10)
-        emitter.emitterSize = CGSize(width: bounds.width, height: 1)
+    private func setup() {
+        backgroundColor = .clear
+
+        // Configurar animación Lottie
+        let animation = LottieAnimation.named("Confetti Rain v2")
+        animationView.animation = animation
+        animationView.contentMode = .scaleAspectFill
+        animationView.loopMode = .loop
+        animationView.play()
+
+        // Añadir y ajustar constraints
+        addSubview(animationView)
+        animationView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            animationView.topAnchor.constraint(equalTo: topAnchor),
+            animationView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            animationView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            animationView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
     }
 }
 
@@ -358,6 +338,13 @@ struct ConfettiView: UIViewRepresentable {
     @Published var selectedDate: Date = wcStart
     @Published var showConfetti: Bool = false
 
+    // Toast de pick realizado
+    @Published var showPickToast: Bool = false
+
+    // Identificar partido con recompensa (solo el primero del 12 de junio)
+    @Published var rewardMatchID: String? = nil
+    private var firstJune12MatchID: String? = nil
+
     private var hasScheduledTestReward = false
 
     // Persistencia de selecciones
@@ -370,6 +357,7 @@ struct ConfettiView: UIViewRepresentable {
         loadAll()
         restoreSelections()
         filterForSelectedDate()
+        computeFirstJune12MatchID()
         logEquiposFaltantes()
     }
 
@@ -389,6 +377,17 @@ struct ConfettiView: UIViewRepresentable {
     func setSelection(for match: UIMatch, kind: PredictionKind) {
         guard !isLocked(match) else { return }
         selections[match.id] = kind
+
+        // Mostrar toast “Pick realizado”
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
+            showPickToast = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            withAnimation(.easeOut(duration: 0.25)) {
+                self?.showPickToast = false
+            }
+        }
+
         triggerTestRewardIfNeeded(match: match, pick: kind)
     }
 
@@ -404,12 +403,16 @@ struct ConfettiView: UIViewRepresentable {
         }
     }
 
-    
-    
-    
+    private func computeFirstJune12MatchID() {
+        let first = allMatches.first { Calendar.current.isDate($0.date, inSameDayAs: june12) }
+        firstJune12MatchID = first?.id
+    }
+
     private func triggerTestRewardIfNeeded(match: UIMatch, pick: PredictionKind) {
+        // Solo para el primer partido del 12 de junio y si pick es EMPATE (ejemplo)
         guard pick == .signDraw else { return }
         guard Calendar.current.isDate(match.date, inSameDayAs: june12) else { return }
+        guard match.id == firstJune12MatchID else { return }
         guard !hasScheduledTestReward else { return }
         hasScheduledTestReward = true
 
@@ -417,9 +420,11 @@ struct ConfettiView: UIViewRepresentable {
             guard let self = self else { return }
             self.totalPoints += 50
             self.streak += 1
+            self.rewardMatchID = match.id
             withAnimation { self.showConfetti = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
                 withAnimation { self.showConfetti = false }
+                self.rewardMatchID = nil
             }
         }
     }
@@ -460,22 +465,37 @@ struct SelectablePill: View {
     let text: String
     let isSelected: Bool
     var isDisabled: Bool = false
+    var highlightAsWin: Bool = false
+    var highlightAsLose: Bool = false
     let action: () -> Void
 
     var body: some View {
+        let isWinningSelected = isSelected && highlightAsWin
+        let isLosingSelected  = isSelected && highlightAsLose
+
         Button(action: action) {
             Text(text)
                 .font(.fwcBlack(12))
-                .foregroundColor(.black)
+                .foregroundColor((isWinningSelected || isLosingSelected) ? .white : .black)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 9)
-                .background(Color(.secondarySystemBackground))
+                .background(
+                    isWinningSelected ? Color.pillGreen :
+                    (isLosingSelected ? Color.pillRed : Color(.secondarySystemBackground))
+                )
                 .clipShape(Capsule())
-                .overlay(Capsule().stroke(.black.opacity(isSelected ? 0.9 : 0.25), lineWidth: isSelected ? 2 : 1))
+                .overlay(
+                    Capsule().stroke(
+                        isWinningSelected ? Color.pillGreen.opacity(0.95) :
+                        (isLosingSelected ? Color.pillRed.opacity(0.95) : .black.opacity(isSelected ? 0.9 : 0.25)),
+                        lineWidth: (isWinningSelected || isLosingSelected) ? 2 : (isSelected ? 2 : 1)
+                    )
+                )
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)
-        .opacity(isDisabled ? 0.5 : 1)
+        // Mantener tinte visible: no atenuar si fue win/lose ni si es la seleccionada
+        .opacity(isDisabled && !(isWinningSelected || isLosingSelected) && !isSelected ? 0.5 : 1)
     }
 }
 
@@ -483,12 +503,34 @@ struct PredictionPicker: View {
     let selected: PredictionKind?
     let onSelect: (PredictionKind) -> Void
     var isLocked: Bool = false
+    var highlightWin: Bool = false
+    var highlightLose: Bool = false
 
     var body: some View {
         HStack(spacing: 10) {
-            SelectablePill(text: "LOCAL",  isSelected: selected == .signHome,  isDisabled: isLocked) { onSelect(.signHome) }
-            SelectablePill(text: "EMPATE", isSelected: selected == .signDraw,  isDisabled: isLocked) { onSelect(.signDraw) }
-            SelectablePill(text: "VISITA", isSelected: selected == .signAway,  isDisabled: isLocked) { onSelect(.signAway) }
+            SelectablePill(
+                text: "LOCAL",
+                isSelected: selected == .signHome,
+                isDisabled: isLocked,
+                highlightAsWin: highlightWin && selected == .signHome,
+                highlightAsLose: highlightLose && selected == .signHome
+            ) { onSelect(.signHome) }
+
+            SelectablePill(
+                text: "EMPATE",
+                isSelected: selected == .signDraw,
+                isDisabled: isLocked,
+                highlightAsWin: highlightWin && selected == .signDraw,
+                highlightAsLose: highlightLose && selected == .signDraw
+            ) { onSelect(.signDraw) }
+
+            SelectablePill(
+                text: "VISITA",
+                isSelected: selected == .signAway,
+                isDisabled: isLocked,
+                highlightAsWin: highlightWin && selected == .signAway,
+                highlightAsLose: highlightLose && selected == .signAway
+            ) { onSelect(.signAway) }
         }
         .padding(.horizontal, 2)
     }
@@ -544,6 +586,8 @@ struct MatchRow: View {
     let selected: PredictionKind?
     let onSelect: (PredictionKind) -> Void
     let pointsInfo: (value: Int, won: Bool, finished: Bool)
+    // Permitir forzar highlight verde durante confetti del partido premiado
+    var bonusHighlightWin: Bool = false
 
     var body: some View {
         let locked = match.status != .notStarted
@@ -581,7 +625,13 @@ struct MatchRow: View {
             .padding(12)
             .fwcGlassCard(22)
 
-            PredictionPicker(selected: selected, onSelect: onSelect, isLocked: locked)
+            PredictionPicker(
+                selected: selected,
+                onSelect: onSelect,
+                isLocked: locked,
+                highlightWin: (pointsInfo.finished && pointsInfo.won) || bonusHighlightWin,
+                highlightLose: pointsInfo.finished && !pointsInfo.won && selected != nil
+            )
 
             Text(match.status == .finished ? "FINALIZADO" :
                  (match.status == .live ? "EN JUEGO" : "AÚN NO COMIENZA EL JUEGO"))
@@ -621,6 +671,20 @@ struct StatPill: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .fwcGlassCard(20)
+    }
+}
+
+struct PickToastView: View {
+    var body: some View {
+        Text("Pick realizado")
+            .font(.fwcBlack(14))
+            .foregroundColor(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(Color.black.opacity(0.85))
+            .clipShape(Capsule())
+            .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+            .accessibilityAddTraits(.isStaticText)
     }
 }
 
@@ -729,7 +793,8 @@ struct PartidosPorFechaView: View {
                                         match: m,
                                         selected: sel,
                                         onSelect: { vm.setSelection(for: m, kind: $0) },
-                                        pointsInfo: vm.points(for: m, selected: sel)
+                                        pointsInfo: vm.points(for: m, selected: sel),
+                                        bonusHighlightWin: vm.showConfetti && vm.rewardMatchID == m.id
                                     )
                                     .padding(.horizontal, 16)
                                 }
@@ -742,6 +807,18 @@ struct PartidosPorFechaView: View {
                     ConfettiView()
                         .ignoresSafeArea()
                         .transition(.opacity)
+                }
+
+                // Toast de pick realizado (centro inferior)
+                if vm.showPickToast {
+                    VStack {
+                        Spacer()
+                        PickToastView()
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                            .padding(.bottom, 22)
+                    }
+                    .padding(.horizontal, 16)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.9), value: vm.showPickToast)
                 }
             }
             

@@ -44,7 +44,9 @@ struct CardsStackSection: View {
                         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: selectedIndex)
                     }
                 }
-                .frame(height: cardHeight + CGFloat(max(0, cards.count - 1)) * gap - 100)
+                // Altura coherente y flexible según cantidad de tarjetas (mínimo una altura de tarjeta)
+                .frame(height: max(cardHeight, cardHeight + CGFloat(max(0, cards.count - 1)) * gap))
+                .padding(.top, 4) // pequeño respiro respecto al toolbar
             }
         }
     }

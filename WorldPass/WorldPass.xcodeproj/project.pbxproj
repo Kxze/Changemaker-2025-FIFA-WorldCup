@@ -8,12 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		8E231E672EBB0D09000CEC41 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 8E231E662EBB0D09000CEC41 /* Lottie */; };
+		8E6391A92EBC5B7D00AEF765 /* kickoD.json in Resources */ = {isa = PBXBuildFile; fileRef = 8E6391A82EBC5B7D00AEF765 /* kickoD.json */; };
 		8ED2F1552EBB337100EA3CA6 /* kickoHi.json in Resources */ = {isa = PBXBuildFile; fileRef = 8ED2F1542EBB337100EA3CA6 /* kickoHi.json */; };
+		8EF21C2E2EBC6A5C00E63C3B /* Confetti Rain v2.json in Resources */ = {isa = PBXBuildFile; fileRef = 8EF21C2D2EBC6A5B00E63C3B /* Confetti Rain v2.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		8E6391A82EBC5B7D00AEF765 /* kickoD.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = kickoD.json; sourceTree = "<group>"; };
 		8ED2F1542EBB337100EA3CA6 /* kickoHi.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = kickoHi.json; sourceTree = "<group>"; };
 		8EDEE77C2E9E124600509869 /* WorldPass.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WorldPass.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8EF21C2D2EBC6A5B00E63C3B /* Confetti Rain v2.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "Confetti Rain v2.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -66,6 +70,8 @@
 			isa = PBXGroup;
 			children = (
 				8ED2F1542EBB337100EA3CA6 /* kickoHi.json */,
+				8E6391A82EBC5B7D00AEF765 /* kickoD.json */,
+				8EF21C2D2EBC6A5B00E63C3B /* Confetti Rain v2.json */,
 			);
 			path = Animations;
 			sourceTree = "<group>";
@@ -157,6 +163,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8E6391A92EBC5B7D00AEF765 /* kickoD.json in Resources */,
+				8EF21C2E2EBC6A5C00E63C3B /* Confetti Rain v2.json in Resources */,
 				8ED2F1552EBB337100EA3CA6 /* kickoHi.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

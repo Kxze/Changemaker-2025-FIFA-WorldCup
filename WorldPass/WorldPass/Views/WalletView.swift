@@ -35,8 +35,8 @@ struct WalletView: View {
         (qrPayload: "{\"uuid\":\"WALLET-TICKET-003\",\"match\":\"ARG-BRA\",\"seat\":\"07-A\"}", theme: .verde)
     ]
 
-    // Sheets
-    @State private var showAddCardSheet: Bool = false
+    // Popover (agregar tarjeta) y sheet (lector)
+    @State private var showAddCardSheet: Bool = false // ahora usado como popover
     @State private var showReaderSheet: Bool = false
 
     // Alert de eliminación
@@ -93,12 +93,26 @@ struct WalletView: View {
                     .font(.custom("FWC2026-NormalBlack", size: 20))
             }
             ToolbarItemGroup(placement: .topBarTrailing) {
+                // Botón + con popover anclado
                 Button {
                     showAddCardSheet = true
                 } label: {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("Agregar tarjeta")
+                .popover(isPresented: $showAddCardSheet, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
+                    AddCardPopup { newCard in
+                        withAnimation(.spring) {
+                            cards.append(newCard)
+                        }
+                        showAddCardSheet = false
+                    } onCancel: {
+                        showAddCardSheet = false
+                    }
+                    .padding()
+                    .frame(minWidth: 320, idealWidth: 360, maxWidth: 420)
+                    .presentationCompactAdaptation(.popover)
+                }
             }
         }
         // Sheet: “Acerca el iPhone al lector”
@@ -111,19 +125,6 @@ struct WalletView: View {
                 showReaderSheet = false
             }
             .presentationDetents([.medium])
-            .presentationDragIndicator(.visible)
-        }
-        // Sheet: Agregar tarjeta
-        .sheet(isPresented: $showAddCardSheet) {
-            AddCardSheet { newCard in
-                withAnimation(.spring) {
-                    cards.append(newCard)
-                }
-                showAddCardSheet = false
-            } onCancel: {
-                showAddCardSheet = false
-            }
-            .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
         // Alert de confirmación de eliminación
@@ -145,8 +146,8 @@ struct WalletView: View {
     }
 }
 
-// MARK: - Sheet para agregar tarjeta (16 dígitos)
-private struct AddCardSheet: View {
+// MARK: - Popover para agregar tarjeta (sin “Fondo”)
+private struct AddCardPopup: View {
     var onAdd: ((holderName: String, cardNumber: String, expiry: String, brand: String, backgroundImageName: String)) -> Void
     var onCancel: () -> Void
 
@@ -154,27 +155,39 @@ private struct AddCardSheet: View {
     @State private var cardNumber: String = "" // 16 dígitos
     @State private var expiry: String = ""
     @State private var brand: String = "VISA"
-    @State private var backgroundImageName: String = ""
 
+    // Asignaremos internamente un fondo aleatorio para mantener el modelo
     private let brands = ["VISA", "Mastercard", "Amex"]
     private let sampleBackgrounds = ["CardC", "CardM", "CardUS"]
 
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Titular")) {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Agregar tarjeta")
+                .font(.headline)
+
+            VStack(spacing: 12) {
+                // Titular
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Titular").font(.subheadline).foregroundStyle(.secondary)
                     TextField("Nombre del titular", text: $holderName)
                         .textContentType(.name)
                         .autocorrectionDisabled()
+                        .textInputAutocapitalization(.words)
+                        .padding(10)
+                        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
 
-                Section(header: Text("Detalles de la tarjeta")) {
+                // Número y vencimiento
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Detalles de la tarjeta").font(.subheadline).foregroundStyle(.secondary)
                     TextField("Número de tarjeta (16 dígitos)", text: $cardNumber)
                         .keyboardType(.numberPad)
                         .onChange(of: cardNumber) { _, newValue in
                             let digits = newValue.filter { $0.isNumber }
                             cardNumber = String(digits.prefix(16))
                         }
+                        .padding(10)
+                        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                     TextField("Vencimiento (MM/AA)", text: $expiry)
                         .textInputAutocapitalization(.never)
@@ -188,45 +201,40 @@ private struct AddCardSheet: View {
                             }
                             expiry = formatted
                         }
+                        .padding(10)
+                        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
 
+                // Marca
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Marca").font(.subheadline).foregroundStyle(.secondary)
                     Picker("Marca", selection: $brand) {
                         ForEach(brands, id: \.self) { b in
                             Text(b).tag(b)
                         }
                     }
+                    .pickerStyle(.segmented)
                 }
+            }
 
-                Section(header: Text("Fondo")) {
-                    Picker("Imagen de fondo", selection: $backgroundImageName) {
-                        ForEach(sampleBackgrounds, id: \.self) { name in
-                            Text(name).tag(name)
-                        }
-                    }
-                    TextField("o escribe el nombre del asset", text: $backgroundImageName)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
+            HStack {
+                Button("Cancelar") { onCancel() }
+                Spacer()
+                Button("Guardar") {
+                    let background = sampleBackgrounds.randomElement() ?? "CardC"
+                    onAdd((holderName: holderName.trimmingCharacters(in: .whitespaces),
+                           cardNumber: cardNumber,
+                           expiry: expiry,
+                           brand: brand,
+                           backgroundImageName: background))
                 }
+                .disabled(!isFormValid)
+                .buttonStyle(.borderedProminent)
             }
-            .navigationTitle("Agregar tarjeta")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { onCancel() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
-                        onAdd((holderName: holderName.trimmingCharacters(in: .whitespaces),
-                               cardNumber: cardNumber,
-                               expiry: expiry,
-                               brand: brand,
-                               backgroundImageName: backgroundImageName))
-                    }
-                    .disabled(!isFormValid)
-                }
-            }
+            .padding(.top, 6)
         }
         .onAppear {
-            backgroundImageName = sampleBackgrounds.randomElement() ?? "CardC"
+            // El fondo se asigna al guardar.
         }
     }
 

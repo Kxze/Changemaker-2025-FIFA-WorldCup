@@ -7,7 +7,7 @@
 
 import SwiftUI
 import Foundation
-
+import Lottie
 
 enum GeminiError: LocalizedError {
     case missingAPIKey
@@ -110,78 +110,81 @@ struct ChatbotFlowView: View {
     var body: some View {
         NavigationStack {
           
-            ZayuIntroView(onClose: { dismiss() })
+            KickoIntroView(onClose: { dismiss() })
         }
         .environment(\.font, .custom("FWC2026-NormalRegular", size: 16))
     }
 }
 
 
-struct ZayuIntroView: View {
+struct KickoIntroView: View {
     @Environment(\.dismiss) private var dismiss
     var onClose: (() -> Void)? = nil
 
     var body: some View {
-        ZStack {
-            Image("FondoVerde")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-
-            VStack {
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.black)
-                        .frame(width: 34, height: 34)
-                        .background(.white)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
-                }
-                .hidden()
-
-                Spacer(minLength: 8)
-
-                Text("¡HOLA,\nSOY ZAYU!")
-                    .multilineTextAlignment(.center)
-                    .font(.fwcTitle(44))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
-                    .padding(.bottom, 8)
-
-                Image("Zayu")
+        GlassEffectContainer {
+            ZStack {
+                
+                Image("FondoRojo")
                     .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 260)
-                    .padding(.vertical, 6)
-
-                Spacer()
-
-                Text("¿Cómo puedo ayudarte?")
-                    .font(.fwcText(18))
-                    .foregroundStyle(.white.opacity(0.95))
-                    .padding(.bottom, 8)
-
-                NavigationLink {
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                
+                VStack {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.black)
+                            .frame(width: 34, height: 34)
+                            .background(.white)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
+                    }
+                    .hidden()
                     
-                    IAPrediccionesView(onClose: onClose)
-                        .navigationBarBackButtonHidden(true)
-                } label: {
-                    Text("Comenzar")
-                        .font(.fwcTitle(17))
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(
-                            Capsule()
-                                .fill(.white)
-                                .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
-                        )
+                    Spacer(minLength: 8)
+                    
+                    Text("¡HOLA,\nSOY KICKO!")
+                        .multilineTextAlignment(.center)
+                        .font(.fwcTitle(44))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                        .padding(.bottom, 8)
+                    
+                    LottieView(animation: .named("kickoD"))
+                        .playing()
+                        .looping()
+                    
+                    
+                    Spacer()
+                    
+                    Text("¿Cómo puedo ayudarte?")
+                        .font(.fwcText(18))
+                        .foregroundStyle(.white.opacity(0.95))
+                        .padding(.bottom, 8)
+                    
+                    NavigationLink {
+                        
+                        IAPrediccionesView(onClose: onClose)
+                            .navigationBarBackButtonHidden(true)
+                    } label: {
+                        Text("Comenzar")
+                            .font(.fwcTitle(17))
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(.white)
+                                    .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+                            )
+                    }
+                    .padding(.bottom, 28)
                 }
-                .padding(.bottom, 28)
+                
             }
+            .toolbar(.hidden, for: .navigationBar)
         }
-        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
@@ -227,7 +230,7 @@ struct IAPrediccionesView: View {
     var onClose: (() -> Void)? = nil
 
     @State private var messages: [Message] = ChatPersistence.load()
-        ?? [Message(text: "¡Hola! Soy Zayu \n¿Cómo puedo ayudarte hoy?", isUser: false)]
+        ?? [Message(text: "¡Hola! Soy Kicko \n¿Cómo puedo ayudarte hoy?", isUser: false)]
 
     @State private var currentMessage: String = ""
     @State private var isLoading = false
@@ -295,10 +298,13 @@ struct IAPrediccionesView: View {
 
             Spacer(minLength: 4)
 
-            Text("HABLA CON ZAYU")
+            Text("HABLA CON KICKO")
                 .font(.fwcTitle(21))
-                .kerning(0.5)
                 .foregroundStyle(.black)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .allowsTightening(true)
+                .truncationMode(.tail)
 
             Spacer()
             Color.clear.frame(width: 34, height: 34)
@@ -312,7 +318,7 @@ struct IAPrediccionesView: View {
     // Composer
     private var composer: some View {
         HStack(spacing: 10) {
-            TextField("Pregunta a Zayu", text: $currentMessage, axis: .vertical)
+            TextField("Pregunta a Kicko", text: $currentMessage, axis: .vertical)
                 .font(.fwcText(16))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
@@ -402,7 +408,7 @@ struct IAPrediccionesView: View {
                         .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
 
                 } else {
-                    Image("ZayuChat")
+                    Image("KickoChat")
                         .resizable()
                         .scaledToFill()
                         .frame(width: 22, height: 22)
@@ -437,7 +443,7 @@ struct IAPrediccionesView: View {
 
         var body: some View {
             HStack(spacing: 8) {
-                Image("ZayuChat")
+                Image("KickoChat")
                     .resizable()
                     .scaledToFill()
                     .frame(width: 22, height: 22)
